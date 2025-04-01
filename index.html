@@ -20,7 +20,7 @@
 let generating = false;
 
 //let genWorker = new Worker(new URL('../generator.js', "https://deltavery.github.io/flow-generator/"));
-let genWorker = new Worker(new URL("generator.js"));
+let genWorker = new Worker(new URL("/generator.js"));
 
 // list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
 let activePuzzles = [];
