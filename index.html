@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+    <link rel="stylesheet" href="stylesheet.css">
+
+    <input id="genButton" type="button" value="Generate" onclick="gen_pressed();" />
+
+    Enter Lengths:
+    <input type="text" id="lengthEntry" name="lengthEntry" value="4,6,6,7,9,11,14,24"><br><br> (Lengths must be numbers separated by commas, and add to 81)
+
+    <div id="errorMessage"></div>
+
+    <div id="generatingMessage"></div>
+
+
+
+<!--Main Javascript-->
+<script>
+let generating = false;
+
+let genWorker = new Worker(new URL('../generator.js', "http://localhost:8000/noodlewebsite.html"));
+
+// list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
+let activePuzzles = [];
+
+// runs upon the puzzle being generated
+genWorker.onmessage = function(event) {
+    console.log("recieved message!");
+    let puzzle = event.data;
+    //outElement.innerHTML = event.data;
+    for (let i = 0; i < puzzle[1].length; i++){
+        let noodle = puzzle[1][i];
+        console.log("Icon: " + noodle.icon);
+        console.log("Length: " + String(noodle.length));
+        console.log(noodle.start);
+        console.log(noodle.end);
+    }
+
+    display_grid(puzzle);
+    generating = false;
+    document.getElementById("generatingMessage").innerHTML = "Done!";
+};
+
+
+function gen_pressed() {
+    let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
+    //let outElement = document.getElementById("testOutput");
+    if (!generating){
+        let lengthData = document.getElementById("lengthEntry").value;
+        lengthData = lengthData.replaceAll(" ","");
+        let lengthList = lengthData.split(",");
+        if (lengthList.length > 20){
+            document.getElementById("errorMessage").innerHTML = "Error: Too many lengths";
+            console.log("Error: Too many lengths");
+            return;
+        }
+        for (let i = 0; i < lengthList.length; i++){
+            if (isNaN(lengthList[i])){
+                console.log(lengthList[i]);
+                document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in lengths";
+                console.log("Error: Non numbers found in lengths");
+                return;
+            }
+            lengthList[i] = Number(lengthList[i]);
+        }
+        console.log(lengthList);
+        console.log(count_gaps(initGrid));
+        if (!still_fillable(count_gaps(initGrid),lengthList)){
+            document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
+            console.log("Error: Cannot fill grid layout with current lengths");
+            return;
+        }
+        genWorker.postMessage([lengthList]);
+        generating = true;
+        document.getElementById("generatingMessage").innerHTML = "Currently generating...";
+    }
+}
+
+// creates html objects for displaying the puzzle solution and adds them to the document
+function display_grid(puzzle){
+    // unique identifier for which puzzle it is
+    // starts at 0, increases for each generated
+    let puzzleNum = activePuzzles.length;
+
+    // adds small gap before displaying grid
+    document.body.appendChild(document.createElement("br"));
+    document.body.appendChild(document.createElement("br"));
+
+    // text giving the number of the puzzle
+    let puzzleTitle = document.createElement("div");
+    puzzleTitle.className = "puzzleTitle";
+    puzzleTitle.innerHTML = "Puzzle " + String(puzzleNum + 1);
+    document.body.appendChild(puzzleTitle);
+
+    let gridElement = document.createElement("div");
+    gridElement.className = "puzzleGrid";
+
+    document.body.appendChild(gridElement);
+    let newElementGrid = [];
+    for (let i = 0; i < 9; i++){
+        let newRow = [];
+        for (let j = 0; j < 9; j++){
+            newRow.push(document.createElement("div"));
+            newRow[j].className = "tile";
+            newRow[j].style.backgroundColor = "lightgrey";
+            gridElement.appendChild(newRow[j]);
+        }
+        newElementGrid.push(newRow);
+    }
+    for (let i = 0; i < puzzle[1].length; i++){
+        let noodle = puzzle[1][i];
+        let start = noodle.start;
+        let end = noodle.end;
+        // -1 because need to convert from 1-9 index in 11x11 grid to 0-8 array
+        newElementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.icon;
+        newElementGrid[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
+        newElementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.icon;
+        newElementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
+    }
+    let solButton = document.createElement("button");
+
+    solButton.innerHTML = "Toggle Solution";
+    solButton.className = "solutionButton";
+
+    solButton.onclick = function () {
+        show_sol_pressed(puzzleNum);
+    }
+
+    let centreDiv = document.createElement("div");
+    centreDiv.className = "centre";
+    document.body.appendChild(centreDiv);
+    centreDiv.appendChild(solButton);
+
+    activePuzzles.push([false,puzzle,newElementGrid,solButton]);
+
+    document.body.appendChild(document.createElement("br"));
+    document.body.appendChild(document.createElement("br"));
+}
+
+function get_direction_icon(){
+
+}
+
+function show_sol_pressed (puzzleNum){
+    console.log(puzzleNum);
+    let puzzleData = activePuzzles[puzzleNum]; // [solutionShowing (true/false), puzzle, elementGrid, button object]
+    let solutionGrid = puzzleData[1][0];
+    let elementGrid = puzzleData[2];
+    let noodleList = puzzleData[1][1];
+    // if the solution IS NOT currently being showed
+    if (puzzleData[0] == false) {
+        console.log("Showing solution...");
+        activePuzzles[puzzleNum][0] = true;
+        // replace shown grid with solution grid
+        // note going 0-8, but solution grid uses 1-9 so +1s included later
+        for (let i = 0; i < 9; i++){
+            for (let j = 0; j < 9; j++){
+                // each string in the grid starts with a number to say which order they're in
+                let tileNum = parseInt(solutionGrid[i+1][j+1]);
+                // removes number to get the colour
+                // sets the colour of the tile to be that colour
+                let tileColour = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
+                elementGrid[i][j].style.backgroundColor = tileColour;
+
+
+                // checking adjacent tiles to see what string it should contain
+                let adjacentTiles = get_adjacent(solutionGrid,i+1,j+1);
+                // contains two numbers based off where the noodle went before and after the current tile
+                // 4 is default value and will only remain if it is the start or end
+                // 0 = down, 1 = up, 2 = right, 3 = left
+                let beforeAfter = [4,4];
+                for (let k = 0; k < 4; k++){
+                    // if the tile is the same noodle (colour)
+                    if (adjacentTiles[k].replace(/[0-9]/g, '') == tileColour){
+                        // checks for tiles before or after in the noodle
+                        if (parseInt(adjacentTiles[k]) == (tileNum-1)){
+                            beforeAfter[0] = k;
+                        } else if (parseInt(adjacentTiles[k]) == (tileNum+1)){
+                            beforeAfter[1] = k;
+                        }
+                    }
+
+                }
+                // if it IS the start or end of a noodle
+                // sets string to the noodles length
+                if (beforeAfter.includes(4)) {
+                    let noodleList = puzzleData[1][1];
+                    for (let k = 1; k < noodleList.length; k++){
+                        if (noodleList[k].icon == tileColour){
+                            elementGrid[i][j].innerHTML = String(noodleList[k].length);
+                        }
+                    }
+                // if it IS NOT the start or the end, looks up the corresponding line to draw
+                // sets the inner html to that string
+                } else {
+                    let correspondingStrings = [[[0,1],"&#x2502"],[[0,2],"&#x250C"],[[0,3],"&#x2510"],[[1,0],"&#x2502"],[[1,2],"&#x2514"],[[1,3],"&#x2518"],[[2,0],"&#x250C"],[[2,1],"&#x2514"],[[2,3],"&#x2500"],[[3,0],"&#x2510"],[[3,1],"&#x2518"],[[3,2],"&#x2500"]];
+                    for (let k = 0; k < 12; k++){
+                        if (are_arrays_equal(beforeAfter,correspondingStrings[k][0])){
+                            elementGrid[i][j].innerHTML = correspondingStrings[k][1];
+                        }
+                    }
+                }
+            }
+        }
+    // if the solution IS currently being showed
+    } else {
+        console.log("Showing puzzle...");
+        // clear all tiles in the grid
+        for (let i = 0; i < 9; i++){
+            for (let j = 0; j < 9; j++){
+                elementGrid[i][j].style.backgroundColor = "lightgrey";
+                elementGrid[i][j].innerHTML = "";
+            }
+        }
+        // for each noodle, fill the start and end
+        for (let i = 0; i < noodleList.length; i++){
+            let noodle = noodleList[i];
+            let start = noodle.start;
+            let end = noodle.end;
+            // note -1 because need to convert from string grid 1-9 to element grid 0-8
+            elementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.icon;
+            elementGrid[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
+            elementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.icon;
+            elementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
+        }
+        
+
+
+
+        activePuzzles[puzzleNum][0] = false;
+    }
+}
+
+//A bunch of functions from the generator.js file
+//Used to check whether a grid is fillable
+
+function min_distance(start,end){
+	return (Math.abs(start[0] - end[0]) + Math.abs(start[1] - end[1]));
+}
+
+//returns strings in adjacent cells in order [below,above,right,left]
+function get_adjacent(grid,row,column){ 
+	return [grid[row + 1][column],grid[row - 1][column],grid[row][column + 1],grid[row][column - 1]];
+}
+
+//returns list of strings of unique numbers adjacent to cell in descending order
+function get_adjacent_num(grid,row,column){ 
+    let nums = [];
+    let adjCells = get_adjacent(grid,row,column);
+    for (let i = 0;i<4;i++){
+        // if cell is a number AND is not already in array
+        // for some reason " " is considered a number so theres the extra check in there
+        if((!isNaN(adjCells[i]) && (adjCells[i] != " ")) && (!nums.includes(adjCells[i]))){
+            nums.push(adjCells[i]);
+        }
+    }
+    //sorts in descending order
+    nums.sort();
+    nums.reverse();
+    return nums;
+}
+
+// returns a list of the size of each "gap" in the grid (groups of " " spaces adjacent to each other)
+// adjacent being up right left down
+function count_gaps(grid){
+    let tempGrid = structuredClone(grid);
+    let nextNum = 0;
+    //list of strings of numbers currently on the grid
+    let finalNums = [];
+    //tracks how much the number of the same index in finalNums is used
+    let numCounts = []; 
+    for (let i = 1; i < 10; i++){
+        for (let j = 1; j < 10; j++){
+            //skips over non empty spaces
+            if (tempGrid[i][j] != " "){
+                continue
+            }
+            let adjNums = get_adjacent_num(tempGrid,i,j);
+            //if no adjacent numbers, uses a new one
+            if (adjNums.length == 0){
+                tempGrid[i][j] = String(nextNum);
+                finalNums.push(String(nextNum));
+                numCounts.push(1)
+                nextNum = nextNum + 1;
+            // if one number adjacent, uses that
+            } else if (adjNums.length == 1) {
+                tempGrid[i][j] = adjNums[0];
+                // updates count of that number in numCounts
+                let numIndex = finalNums.indexOf(adjNums[0]);
+                numCounts[numIndex] = numCounts[numIndex] + 1;
+            } else {
+                //takes lowest number from adjacent numbers
+                let remainNum = adjNums.pop();
+                tempGrid[i][j] = remainNum;
+                //removes other numbers from the list of used numbers
+                for (let k = 0; k < adjNums.length; k++){
+                    let numIndex = finalNums.indexOf(adjNums[k]);
+                    finalNums.splice(numIndex,1);
+                    numCounts.splice(numIndex,1);
+                }
+                //replaces said numbers with the lowest one
+                for (let k = 1; k <= i+1; k++){
+                    for (let l = 1; l <= 10; l++){
+                        if (adjNums.includes(tempGrid[k][l])){
+                            tempGrid[k][l] = remainNum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return numCounts;
+}
+
+// returns [[list of sums], list of combinations [4,4,6,etc] at corresponding index]
+// note affects original list
+function get_combinations_recur(lengthList){
+    if (lengthList.length == 0){
+        return [[0],[[]]];
+    }
+    let current = lengthList.pop();
+    let otherCombs = get_combinations_recur(lengthList);
+    let allCombs = [otherCombs[0].concat(otherCombs[0].map(n => n + current)),otherCombs[1].concat(otherCombs[1].map(x => x.concat([current])))];
+    return allCombs;
+
+}
+
+// returns [[list of sums], list of combinations [4,4,6,etc] at corresponding index]
+// does not affect original list
+// does not include the zero sum
+function get_combinations(lengthList){
+    let tempList = structuredClone(lengthList);
+    let results = get_combinations_recur(tempList);
+    // removes the 0 combination (and corresponding [] used to sum to it)
+    results[0].shift();
+    results[1].shift();
+    return results;
+}
+
+// returns true if the integers in lengthList can be summed to create the integers in gapList
+// (otherwise false)
+// each integer in lengthList only being used once
+// works recursively, picking one gap seeing if it can be summed with the lengths
+// ... then repeating with the remaining gaps and lengths
+// cannot be over or under, must be exact
+function still_fillable(gapList,lengthList){
+    // if all lengths are used, then it is fillable (terminating case for recursion)
+    if (lengthList.length == 0){
+        return true
+    }
+    let remainingGaps = structuredClone(gapList);
+    let gap = remainingGaps.pop();
+    let combinations = get_combinations(lengthList);
+    let valid = [];
+    // if it is not possible to fill the current gap with the remaining lengths
+    // returns false (not still fillable)
+    if (!combinations[0].includes(gap)){
+        return false;
+    // gets every combination of lengths that can fill said gap
+    } else {
+        for (let i = 0; i < combinations[0].length; i++){
+            if (combinations[0][i] == gap){
+                valid.push(combinations[1][i]);
+            }
+        }
+    }
+    // for each combination, repeats the function with the remaining gaps and lengths
+    // if any of them are true, then it is still fillable
+    // if not, then it is not
+    let fillable = false;
+    for (let i = 0; i < valid.length; i++){
+        // comb is a list of integers that add to the current gap
+        let comb = valid[i]
+        let remainingLengths = structuredClone(lengthList);
+        // removes all numbers in comb from the list of lengths
+        for (let j = 0; j < comb.length;j++){
+            let numIndex = remainingLengths.indexOf(comb[j]);
+            remainingLengths.splice(numIndex,1);
+        }
+        if (still_fillable(remainingGaps,remainingLengths)){
+            fillable = true;
+        }
+    }
+    return fillable;
+}
+
+function are_arrays_equal(array1,array2){
+	if (array1.length != array2.length){
+		return false;
+	}
+	for (let i = 0; i<array1.length; i++){
+		if (array1[i] != array2[i]){
+			return false;
+		}
+	}
+	return true;
+
+}
+
+</script>
+</body>
+</html>
+

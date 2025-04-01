@@ -1,0 +1,38 @@
+body {
+	background-color: dimgrey;
+}
+
+.tile {
+	border-radius: 15px;
+	background-color: grey;
+	padding: 15px;
+	width: 30px;
+    height: 30px;
+    float: left;
+    text-align: center;
+    font-weight: bold;
+    font-size: 35px;
+}
+
+.puzzleGrid{
+    display:grid;
+    grid-template-columns: 63px 63px 63px 63px 63px 63px 63px 63px 63px;
+    justify-content: center;
+    row-gap: 3px;
+}
+
+.centre{
+    text-align: center;
+}
+
+.solutionButton{
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.puzzleTitle{
+    text-align: center;
+    font-size: 50px;
+    font-weight: bold;
+}
