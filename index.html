@@ -4,25 +4,62 @@
 
     <link rel="stylesheet" href="stylesheet.css">
 
-    <input id="genButton" type="button" value="Generate" onclick="gen_pressed();" />
+    <div class="row"><div class = "column">
 
+    
     Enter Lengths:
-    <input type="text" id="lengthEntry" name="lengthEntry" value="4,6,6,7,9,11,14,24"><br>
-    (Lengths must be numbers separated by commas, and add to 81)
+    <input type="text" id="lengthEntry" name="lengthEntry" value="4,6,6,7,9,11,14,24">
+
+    <br>
+
+    (Lengths must be numbers separated by commas, and be able to fill the grid exactly)
+    <br>
     (Note: may take a very long time if not many short noodles are present)
+
+    <br><br>
+
+    Enter Turning Chance:
+    <input type="text" id="turnChanceEntry" name="turnChanceEntry" value="0.6">
+
+    <br>
+    (Must be a number between 0 and 1)
+    <br>
+    (Higher means more "wiggly" lines)
+    <br>
+    (Previously this was set to 0.25)
+    <br>
+    (Note: numbers close to 1 may take a lot longer to generate)
+
+    <br><br>
+
+    <input id="genButton" type="button" style="font-size:20px;" value="Generate" onclick="gen_pressed();" />
 
     <div id="errorMessage"></div>
 
     <div id="generatingMessage"></div>
 
+    </div><div class="column" id="settingsGridHolder" style="font-size:17px;">
+
+    Click the tiles on the grid to remove/add them from the puzzle:
+
+    <br>
+
+    </div></div>
+
 
 
 <!--Main Javascript-->
 <script>
+// tracks whether the web worker is currently generating a puzzle
+// (Doesnt let it start another if it is)
 let generating = false;
 
-//let genWorker = new Worker(new URL('../generator.js', "https://deltavery.github.io/flow-generator/"));
+// the grid that determines the shape of the puzzle
+// 11x11 with "X" on the outer border (so there is a 9x9 within)
+let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
+
 let genWorker = new Worker("generator.js");
+//let genWorker = new Worker(new URL('../generator.js', "http://localhost:8000/website.html"));
 
 // list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
 let activePuzzles = [];
@@ -45,11 +82,47 @@ genWorker.onmessage = function(event) {
     document.getElementById("generatingMessage").innerHTML = "Done!";
 };
 
+// generating the grid to change puzzle size
+let settingsGridDiv = document.createElement("div");
+settingsGridDiv.className = "puzzleGrid";
+document.getElementById("settingsGridHolder").appendChild(settingsGridDiv);
+
+let settingsGridElements = [];
+for (let i = 0; i < 9; i++){
+    let newRow = [];
+    for (let j = 0; j < 9; j++){
+        newRow.push(document.createElement("div"));
+        newRow[j].className = "tile";
+        newRow[j].style.backgroundColor = "lightgrey";
+        newRow[j].onclick = function () {
+            setting_tile_clicked(i,j);
+        }
+        settingsGridDiv.appendChild(newRow[j]);
+    }
+    settingsGridElements.push(newRow);
+}
+
+// runs when one of the tiles in the grid editor is clicked
+// swaps the tile from grey to black (or vice versa) and edits initGrid to block/allow that tile
+function setting_tile_clicked(row,column){
+    if (initGrid[row+1][column+1] == " ") {
+        initGrid[row+1][column+1] = "X";
+        settingsGridElements[row][column].style.backgroundColor = "black";
+    } else {
+        initGrid[row+1][column+1] = " ";
+        settingsGridElements[row][column].style.backgroundColor = "lightgrey";
+    }
+}
+
+
+
+
+
 
 function gen_pressed() {
-    let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
     //let outElement = document.getElementById("testOutput");
     if (!generating){
+        // Checking length data to see if it is valid
         let lengthData = document.getElementById("lengthEntry").value;
         lengthData = lengthData.replaceAll(" ","");
         let lengthList = lengthData.split(",");
@@ -67,14 +140,28 @@ function gen_pressed() {
             }
             lengthList[i] = Number(lengthList[i]);
         }
-        console.log(lengthList);
-        console.log(count_gaps(initGrid));
+        //console.log(lengthList);
+        //console.log(count_gaps(initGrid));
         if (!still_fillable(count_gaps(initGrid),lengthList)){
             document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
             console.log("Error: Cannot fill grid layout with current lengths");
             return;
         }
-        genWorker.postMessage([lengthList]);
+        // Checking turning chance data to see if it is valid
+        let turnData = document.getElementById("turnChanceEntry").value;
+        turnData = turnData.replaceAll(" ","");
+        if (isNaN(turnData)) {
+            document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
+            return;
+        }
+        if ((turnData < 0) || (turnData > 1)) {
+            document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
+            return;
+        }
+
+
+        // Starting the generation of the puzzle
+        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid]);
         generating = true;
         document.getElementById("generatingMessage").innerHTML = "Currently generating...";
     }
@@ -106,8 +193,14 @@ function display_grid(puzzle){
         for (let j = 0; j < 9; j++){
             newRow.push(document.createElement("div"));
             newRow[j].className = "tile";
-            newRow[j].style.backgroundColor = "lightgrey";
+            // makes it black if the tile is "X" (not in puzzle), grey otherwise
+            if (puzzle[0][i+1][j+1] == "X"){
+                newRow[j].style.backgroundColor = "black";
+            } else {
+                newRow[j].style.backgroundColor = "lightgrey";
+            }
             gridElement.appendChild(newRow[j]);
+
         }
         newElementGrid.push(newRow);
     }
@@ -121,6 +214,8 @@ function display_grid(puzzle){
         newElementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.icon;
         newElementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
     }
+
+    // creating the button
     let solButton = document.createElement("button");
 
     solButton.innerHTML = "Toggle Solution";
@@ -146,7 +241,7 @@ function get_direction_icon(){
 }
 
 function show_sol_pressed (puzzleNum){
-    console.log(puzzleNum);
+    //console.log(puzzleNum);
     let puzzleData = activePuzzles[puzzleNum]; // [solutionShowing (true/false), puzzle, elementGrid, button object]
     let solutionGrid = puzzleData[1][0];
     let elementGrid = puzzleData[2];
@@ -212,7 +307,11 @@ function show_sol_pressed (puzzleNum){
         // clear all tiles in the grid
         for (let i = 0; i < 9; i++){
             for (let j = 0; j < 9; j++){
-                elementGrid[i][j].style.backgroundColor = "lightgrey";
+                if (solutionGrid[i+1][j+1] == "X"){
+                    elementGrid[i][j].style.backgroundColor = "black";
+                } else {
+                    elementGrid[i][j].style.backgroundColor = "lightgrey";
+                }
                 elementGrid[i][j].innerHTML = "";
             }
         }
@@ -295,18 +394,24 @@ function count_gaps(grid){
             } else {
                 //takes lowest number from adjacent numbers
                 let remainNum = adjNums.pop();
+                //changes current tile to the lower number and updates the count
                 tempGrid[i][j] = remainNum;
+                let remainIndex = finalNums.indexOf(remainNum);
+                numCounts[remainIndex] = numCounts[remainIndex] + 1;
+
                 //removes other numbers from the list of used numbers
                 for (let k = 0; k < adjNums.length; k++){
                     let numIndex = finalNums.indexOf(adjNums[k]);
                     finalNums.splice(numIndex,1);
                     numCounts.splice(numIndex,1);
                 }
+                //remainIndex = finalNums.indexOf(remainNum);
                 //replaces said numbers with the lowest one
-                for (let k = 1; k <= i+1; k++){
-                    for (let l = 1; l <= 10; l++){
+                for (let k = 1; k <= i; k++){
+                    for (let l = 1; l <= 9; l++){
                         if (adjNums.includes(tempGrid[k][l])){
                             tempGrid[k][l] = remainNum;
+                            numCounts[remainIndex] = numCounts[remainIndex] + 1;
                         }
                     }
                 }

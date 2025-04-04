@@ -84,18 +84,24 @@ function count_gaps(grid){
             } else {
                 //takes lowest number from adjacent numbers
                 let remainNum = adjNums.pop();
+                //changes current tile to the lower number and updates the count
                 tempGrid[i][j] = remainNum;
+                let remainIndex = finalNums.indexOf(remainNum);
+                numCounts[remainIndex] = numCounts[remainIndex] + 1;
+
                 //removes other numbers from the list of used numbers
                 for (let k = 0; k < adjNums.length; k++){
                     let numIndex = finalNums.indexOf(adjNums[k]);
                     finalNums.splice(numIndex,1);
                     numCounts.splice(numIndex,1);
                 }
+                //remainIndex = finalNums.indexOf(remainNum);
                 //replaces said numbers with the lowest one
-                for (let k = 1; k <= i+1; k++){
-                    for (let l = 1; l <= 10; l++){
+                for (let k = 1; k <= i; k++){
+                    for (let l = 1; l <= 9; l++){
                         if (adjNums.includes(tempGrid[k][l])){
                             tempGrid[k][l] = remainNum;
+                            numCounts[remainIndex] = numCounts[remainIndex] + 1;
                         }
                     }
                 }
@@ -432,38 +438,24 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 1
 function generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02){
     let result = false;
     while (result == false){
-        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02);
+        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout);
     }
     return result;
-}
-
-function test_me(){
-	let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
-	let noodleList = [["a",4],["b",6],["c",6],["d",7],["e",9],["f",11],["g",14],["h",24]];
-    let puzzle = generate_puzzle(initGrid,noodleList,0.25,5000,0.05);
-    console.log("-----=====-----")
-    for (let i = 0; i < puzzle[1].length; i++){
-        let noodle = puzzle[1][i];
-        console.log("Icon: " + noodle.icon);
-        console.log("Length: " + String(noodle.length));
-        console.log(noodle.start);
-        console.log(noodle.end);
-    }
-    show_grid(puzzle[0]);
-    
 }
 
 function worker_called(genParams){
     console.log("Input checks passed");
     let coloursList = ["red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategray","goldenrod","seagreen","slategray","teal","saddle brown","lavender"];
-    let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
+    //let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
 	let noodleList = [];
     let lengthsList = genParams[0];
+    let turnChance = genParams[1];
+    let initGrid = genParams[2];
     console.log(genParams);
     for (let i = 0; i < lengthsList.length; i++){
         noodleList.push([coloursList[i],lengthsList[i]]);
     }
-    let puzzle = generate_puzzle(initGrid,noodleList,0.25,5000,0.05);
+    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,0.02);
     postMessage(puzzle);
 }
 

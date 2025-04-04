@@ -2,6 +2,15 @@ body {
 	background-color: dimgrey;
 }
 
+.row {
+    display:flex;
+}
+
+.column {
+    flex: 50%;
+    text-align: center;
+}
+
 .tile {
 	border-radius: 15px;
 	background-color: grey;
