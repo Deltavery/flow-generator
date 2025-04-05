@@ -186,7 +186,7 @@ function still_fillable(gapList,lengthList){
 // does not affect original grid
 // noodle is in form ["string to put on grid",length integer]
 // turn change is probability (between 0 and 1) to turn regardless of reaching a dead end
-function place_noodle(inputGrid,noodle,turnChance=0.25){
+function place_noodle(inputGrid,noodle,turnChance=0.25,straightLimit = 81){
     let grid = structuredClone(inputGrid);
     // icon: string that will be filled into the grid
     let icon = noodle[0];
@@ -212,7 +212,11 @@ function place_noodle(inputGrid,noodle,turnChance=0.25){
     // the direction that the noodle moved in most recently
     // exists so that the noodle can have a modified probability to keep going in the same direction
     // starts random because there is no preferred direction from the single initial cell
+    // 0123 = down, up, right, left
     let direction = get_random_int(0,3);
+    // will redefine this on first iteration of loop
+    let initDirection = "unset";
+    let hasTurned = false;
 
     while (lengthLeft > 0){
         // list of the [row,col] coordinates of the cells adjacent to the current one
@@ -239,9 +243,23 @@ function place_noodle(inputGrid,noodle,turnChance=0.25){
         cell = adjacentCells[direction];
         grid[cell[0]][cell[1]] = icon;
         lengthLeft = lengthLeft - 1;
+
+        // checks to see if a turn has been made
+        // this is used to disallow compeltely straight noodles
+        if (initDirection == "unset"){
+            initDirection = direction;
+        } else if (direction != initDirection) {
+            hasTurned = true;
+        }
     }
     // end is [row,column] of final cell the noodle fills
     let end = cell;
+
+    // STRAIGHT LINE PROTECTION:
+    // if it is above the given length and has not turned, rejects it (returns false)
+    if ((!hasTurned) && (noodle[1] > straightLimit)){
+        return false;
+    }
 
     // 180 PROTECTION: if the start or end have more than 1 noodle cell adjacent, rejects it (returns false)
     let startAdjacent = get_adjacent(grid,start[0],start[1]);
@@ -380,7 +398,7 @@ function is_unique(grid,noodles,solverTimeout = 0.02){
 // if not, returns false
 // if yes, then repeats with the next noodle until completion
 // inputNoodles list of ["string to put on grid", length]
-function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02){
+function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02,straightLimit=81){
     let grid = structuredClone(inputGrid);
     let finalNoodles = [];
     let noodles = structuredClone(inputNoodles);
@@ -398,7 +416,7 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 1
         let noodleResult = [];
 
         while ((!validTry) && (count < tryCap)){
-            noodleResult = place_noodle(grid,noodle,turnChance);
+            noodleResult = place_noodle(grid,noodle,turnChance,straightLimit);
             validTry = true;
             if (noodleResult == false){
                 validTry = false;
@@ -435,10 +453,10 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 1
 // turn chance is chance for noodle to turn regardless of reaching dead end
 // try cap is amount of times to try place a noodle before giving up
 // solver timeout is maximum time taken to check 1% of the grids when solving before giving up
-function generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02){
+function generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02,straightLimit = 81){
     let result = false;
     while (result == false){
-        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout);
+        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit);
     }
     return result;
 }
@@ -451,11 +469,12 @@ function worker_called(genParams){
     let lengthsList = genParams[0];
     let turnChance = genParams[1];
     let initGrid = genParams[2];
+    let straightLimit = genParams[3];
     console.log(genParams);
     for (let i = 0; i < lengthsList.length; i++){
         noodleList.push([coloursList[i],lengthsList[i]]);
     }
-    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,0.02);
+    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,0.02,straightLimit);
     postMessage(puzzle);
 }
 

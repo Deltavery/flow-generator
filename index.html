@@ -8,9 +8,9 @@
 
     
     Enter Lengths:
-    <input type="text" id="lengthEntry" name="lengthEntry" value="4,6,6,7,9,11,14,24">
-
-    <br>
+    <input type="text" id="lengthEntry" name="lengthEntry" value="6,7,7,9,9,11,14,18" oninput="length_typed()">
+    <div id="lengthSum"></div>
+    Empty tiles in grid: <div id="emptyTileSum">81</div>
 
     (Lengths must be numbers separated by commas, and be able to fill the grid exactly)
     <br>
@@ -29,6 +29,13 @@
     (Previously this was set to 0.25)
     <br>
     (Note: numbers close to 1 may take a lot longer to generate)
+
+    <br><br>
+
+    Enter Highest Length of Straight Line Allowed:
+    <input type="text" id="straightLimitEntry">
+    <br>
+    (If left blank, there will be no limit)
 
     <br><br>
 
@@ -63,6 +70,9 @@ let genWorker = new Worker("generator.js");
 
 // list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
 let activePuzzles = [];
+
+// making the sum of the lengths initially show the correct amount (81) instead of nothing
+length_typed();
 
 // runs upon the puzzle being generated
 genWorker.onmessage = function(event) {
@@ -108,13 +118,45 @@ function setting_tile_clicked(row,column){
     if (initGrid[row+1][column+1] == " ") {
         initGrid[row+1][column+1] = "X";
         settingsGridElements[row][column].style.backgroundColor = "black";
+        // subtracts 1 from the sum of empty tiles tracker
+        document.getElementById("emptyTileSum").innerHTML = String(parseInt(document.getElementById("emptyTileSum").innerHTML) - 1);
     } else {
         initGrid[row+1][column+1] = " ";
         settingsGridElements[row][column].style.backgroundColor = "lightgrey";
+        // adds 1 to the sum of empty tiles tracker
+        document.getElementById("emptyTileSum").innerHTML = String(parseInt(document.getElementById("emptyTileSum").innerHTML) + 1);
     }
 }
 
-
+// runs each time someone types in the length list entry box
+// either displays the same error as if you tried to generate with it
+// or displays the sum of the numbers if valid
+function length_typed() {
+    // Checking length data to see if it is valid
+    let lengthData = document.getElementById("lengthEntry").value;
+    lengthData = lengthData.replaceAll(" ","");
+    let lengthList = lengthData.split(",");
+    if (lengthList.length > 20){
+        document.getElementById("lengthSum").innerHTML = "Error: Cannot use more than 20 lengths";
+        return;
+    }
+    let sum = 0;
+    for (let i = 0; i < lengthList.length; i++){
+        if (isNaN(lengthList[i])){
+            document.getElementById("lengthSum").innerHTML = "Error: Non numbers found in lengths";
+            return;
+        } else {
+            sum = sum + parseInt(lengthList[i]);
+        }
+        lengthList[i] = Number(lengthList[i]);
+    }
+    // would display NaN if "" was in the list, this checks for that and clears it instead
+    if (String(sum) != "NaN"){
+        document.getElementById("lengthSum").innerHTML = "Sum: " + String(sum);
+    } else {
+        document.getElementById("lengthSum").innerHTML = "";
+    }
+}
 
 
 
@@ -158,10 +200,17 @@ function gen_pressed() {
             document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
             return;
         }
+        
+        // getting straightLimit data
+        let straightLimit = document.getElementById("straightLimitEntry").value;
+        straightLimit = parseInt(straightLimit);
+        if (isNaN(straightLimit)) {
+            straightLimit = 82; //ie, no limit
+        }
 
 
         // Starting the generation of the puzzle
-        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid]);
+        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid,straightLimit]);
         generating = true;
         document.getElementById("generatingMessage").innerHTML = "Currently generating...";
     }
