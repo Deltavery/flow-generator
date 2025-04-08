@@ -325,9 +325,13 @@ function show_sol_pressed (puzzleNum){
                 // removes number to get the colour
                 // sets the colour of the tile to be that colour
                 let tileIcon = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
-                let tileColour = noodleList[noodleList.map(x => x.icon).indexOf(tileIcon)].colour;
-                elementGrid[i][j].style.backgroundColor = tileColour;
-
+                console.log(tileIcon);
+                console.log(noodleList.map(x => x.icon));
+                if (tileIcon != "X"){
+                    let tileColour = noodleList[noodleList.map(x => x.icon).indexOf(tileIcon)].colour;
+                    elementGrid[i][j].style.backgroundColor = tileColour;
+                }
+                
 
                 // checking adjacent tiles to see what string it should contain
                 let adjacentTiles = get_adjacent(solutionGrid,i+1,j+1);
