@@ -43,18 +43,34 @@
 
     <br><br>
 
-    <input id="genButton" type="button" style="font-size:20px;" value="Generate" onclick="gen_pressed();" />
+    <label for="presetSelect">Choose a saved preset:</label>
+    <select name="presetSelect" id="presetSelect">
+      <option value="default">default</option>
+      <option value="NIGHTMARE MODE">NIGHTMARE MODE</option>
+    </select>
+    <input id="loadButton" type="button" value="Load" onclick="load_pressed();" >
+
+    <br><br>
+    <!--
+    Save current layout:
+    <input type="text" id="presetNameEntry" value="enter name here">
+    <input id="saveButton" type="button" value="Save" onclick="gen_pressed();" >
+
+    <br><br>
+    -->
+    <input id="genButton" type="button" style="font-size:20px;" value="Generate" onclick="gen_pressed();" >
 
     <div id="errorMessage"></div>
 
     <div id="generatingMessage"></div>
 
-    <br><br><br><br>
+    <br><br>
     Update Notes:
     <ul>
         <li>Made the unique solution checker faster, so it should be possible to have turning chance 1 now!</li>
         <li>Turning chance 1 does take a little longer but I think the puzzles are a lot harder/more interesting</li>
         <li>Added the option to make noodles of the same length the same colour</li>
+        <li>Added option to load from a couple saved presets, will add option to save your own soon</li>
     </ul>
 
     </div><div class="column" id="settingsGridHolder" style="font-size:17px;">
@@ -84,8 +100,12 @@ let genWorker = new Worker("generator.js");
 // list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
 let activePuzzles = [];
 
-// making the sum of the lengths initially show the correct amount (81) instead of nothing
-length_typed();
+// initial presets
+let savedPresets = [["default",[[6,7,7,9,9,11,14,18],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5,false]]];
+savedPresets.push(["NIGHTMARE MODE",[[6,6,7,7,8,8,9,9,10,10],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," ","X"," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5,true]]);
+
+// loads the preset in the first slot, ie the default one
+load_pressed();
 
 // runs upon the puzzle being generated
 genWorker.onmessage = function(event) {
@@ -125,6 +145,36 @@ for (let i = 0; i < 9; i++){
     settingsGridElements.push(newRow);
 }
 
+
+
+// -----===== FUNCTIONS =====-----
+
+// runs when the generate button is pressed
+function gen_pressed() {
+    if (!generating){
+        // Starting the generation of the puzzle
+        genWorker.postMessage(get_parameters());
+        generating = true;
+        document.getElementById("generatingMessage").innerHTML = "Currently generating...";
+    }
+}
+
+// runs upon the "load" button being pressed
+// checks the preset drop down menu
+// if a saved preset with that name exists, loads it
+function load_pressed() {
+    let presetName = document.getElementById("presetSelect").value;
+    let presetNameList = savedPresets.map(x => x[0]);
+    // the first element of each savedPreset is its name
+    if (presetNameList.includes(presetName)){
+        let presetIndex = presetNameList.indexOf(presetName);
+        // the second element of each savedPreset is the list of parameters
+        load_parameters(savedPresets[presetIndex][1]);
+    } else {
+        console.log("no such preset name exists!");
+    }
+}
+
 // runs when one of the tiles in the grid editor is clicked
 // swaps the tile from grey to black (or vice versa) and edits initGrid to block/allow that tile
 function setting_tile_clicked(row,column){
@@ -143,6 +193,7 @@ function setting_tile_clicked(row,column){
 
 // runs each time someone types in the length list entry box
 // either displays the same error as if you tried to generate with it
+// ... (except not being able to fill the grid with the sum)
 // or displays the sum of the numbers if valid
 function length_typed() {
     // Checking length data to see if it is valid
@@ -173,64 +224,111 @@ function length_typed() {
 
 
 
-
-function gen_pressed() {
-    //let outElement = document.getElementById("testOutput");
-    if (!generating){
-        // Checking length data to see if it is valid
-        let lengthData = document.getElementById("lengthEntry").value;
-        lengthData = lengthData.replaceAll(" ","");
-        let lengthList = lengthData.split(",");
-        if (lengthList.length > 20){
-            document.getElementById("errorMessage").innerHTML = "Error: Too many lengths";
-            console.log("Error: Too many lengths");
-            return;
-        }
-        for (let i = 0; i < lengthList.length; i++){
-            if (isNaN(lengthList[i])){
-                console.log(lengthList[i]);
-                document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in lengths";
-                console.log("Error: Non numbers found in lengths");
-                return;
-            }
-            lengthList[i] = Number(lengthList[i]);
-        }
-        //console.log(lengthList);
-        //console.log(count_gaps(initGrid));
-        if (!still_fillable(count_gaps(initGrid),lengthList)){
-            document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
-            console.log("Error: Cannot fill grid layout with current lengths");
-            return;
-        }
-        // Checking turning chance data to see if it is valid
-        let turnData = document.getElementById("turnChanceEntry").value;
-        turnData = turnData.replaceAll(" ","");
-        if (isNaN(turnData)) {
-            document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
-            return;
-        }
-        if ((turnData < 0) || (turnData > 1)) {
-            document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
-            return;
-        }
-        
-        // getting straightLimit data
-        let straightLimit = document.getElementById("straightLimitEntry").value;
-        straightLimit = parseInt(straightLimit);
-        if (isNaN(straightLimit)) {
-            straightLimit = 82; //ie, no limit
-        }
-
-        // getting colourDuping data
-        let colourDuping = document.getElementById("sameColourEntry").checked;
-
-
-        // Starting the generation of the puzzle
-        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid,straightLimit,colourDuping]);
-        generating = true;
-        document.getElementById("generatingMessage").innerHTML = "Currently generating...";
+// gets the current genParams and returns it
+// also used to save layouts to load them later
+function get_parameters(){
+    // Checking length data to see if it is valid
+    let lengthData = document.getElementById("lengthEntry").value;
+    lengthData = lengthData.replaceAll(" ","");
+    let lengthList = lengthData.split(",");
+    if (lengthList.length > 20){
+        document.getElementById("errorMessage").innerHTML = "Error: Too many lengths";
+        console.log("Error: Too many lengths");
+        return;
     }
+    for (let i = 0; i < lengthList.length; i++){
+        if (isNaN(lengthList[i])){
+            console.log(lengthList[i]);
+            document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in lengths";
+            console.log("Error: Non numbers found in lengths");
+            return;
+        }
+        lengthList[i] = Number(lengthList[i]);
+    }
+    if (!still_fillable(count_gaps(initGrid),lengthList)){
+        document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
+        console.log("Error: Cannot fill grid layout with current lengths");
+        return;
+    }
+    // Checking turning chance data to see if it is valid
+    let turnData = document.getElementById("turnChanceEntry").value;
+    turnData = turnData.replaceAll(" ","");
+    if (isNaN(turnData)) {
+        document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
+        return;
+    }
+    if ((turnData < 0) || (turnData > 1)) {
+        document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
+        return;
+    }
+    
+    // getting straightLimit data
+    let straightLimit = document.getElementById("straightLimitEntry").value;
+    straightLimit = parseInt(straightLimit);
+    if (isNaN(straightLimit)) {
+        straightLimit = 82; //ie, no limit
+    }
+
+    // getting colourDuping data
+    let colourDuping = document.getElementById("sameColourEntry").checked;
+
+    return [lengthList,parseFloat(turnData),initGrid,straightLimit,colourDuping];
 }
+
+function load_parameters(inputParams){
+    let lengthList = inputParams[0];
+    let turnData = inputParams[1];
+    let newGrid = inputParams[2];
+    let straightLimit = inputParams[3];
+    let colourDuping = inputParams[4];
+
+    // updating lengths entry
+    let lengthString = String(lengthList[0]);
+    for (let i = 1; i < lengthList.length; i++){
+        lengthString = lengthString + "," + String(lengthList[i]);
+    }
+    document.getElementById("lengthEntry").value = lengthString;
+    length_typed();
+
+    // updating turning chance
+    document.getElementById("turnChanceEntry").value = String(turnData);
+
+    // updating grid and empty tiles tracker
+    update_grid(newGrid);
+
+    // updating straight line limit
+    document.getElementById("straightLimitEntry").value = String(straightLimit);
+
+    // updating colour duping toggle
+    document.getElementById("sameColourEntry").checked = colourDuping;
+}
+
+// takes a new grid
+// updates the grid editor to be the new one
+// changes the tile colours and empty tile count to be the new one
+function update_grid(newGrid){
+    let icons = ["X"," "];
+    let colours = ["black","lightgrey"];
+    let sumDiff = [-1,1];
+    for (let i = 1; i <= 9; i++){
+        for (let j = 1; j <= 9; j++){
+            if (initGrid[i][j] != newGrid[i][j]){
+                console.log("icon: " + newGrid[i][j])
+                let newColour = colours[icons.indexOf(newGrid[i][j])];
+                console.log(newColour);
+                // sets tile colour to the new one
+                settingsGridElements[i-1][j-1].style.backgroundColor = newColour;
+                // adds or subtracts from sum depending on new one
+                document.getElementById("emptyTileSum").innerHTML = String(parseInt(document.getElementById("emptyTileSum").innerHTML) + sumDiff[icons.indexOf(newGrid[i][j])]);
+            }
+        }
+    }
+    initGrid = newGrid;
+}
+
+
+
+
 
 // creates html objects for displaying the puzzle solution and adds them to the document
 function display_grid(puzzle){
@@ -301,10 +399,6 @@ function display_grid(puzzle){
     document.body.appendChild(document.createElement("br"));
 }
 
-function get_direction_icon(){
-
-}
-
 function show_sol_pressed (puzzleNum){
     //console.log(puzzleNum);
     let puzzleData = activePuzzles[puzzleNum]; // [solutionShowing (true/false), puzzle, elementGrid, button object]
@@ -324,8 +418,6 @@ function show_sol_pressed (puzzleNum){
                 // removes number to get the colour
                 // sets the colour of the tile to be that colour
                 let tileIcon = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
-                console.log(tileIcon);
-                console.log(noodleList.map(x => x.icon));
                 if (tileIcon != "X"){
                     let tileColour = noodleList[noodleList.map(x => x.icon).indexOf(tileIcon)].colour;
                     elementGrid[i][j].style.backgroundColor = tileColour;
