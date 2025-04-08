@@ -153,7 +153,11 @@ for (let i = 0; i < 9; i++){
 function gen_pressed() {
     if (!generating){
         // Starting the generation of the puzzle
-        genWorker.postMessage(get_parameters());
+        let parameters = get_parameters();
+        if (parameters == false){
+            return;
+        }
+        genWorker.postMessage(parameters);
         generating = true;
         document.getElementById("generatingMessage").innerHTML = "Currently generating...";
     }
@@ -234,32 +238,32 @@ function get_parameters(){
     if (lengthList.length > 20){
         document.getElementById("errorMessage").innerHTML = "Error: Too many lengths";
         console.log("Error: Too many lengths");
-        return;
+        return false;
     }
     for (let i = 0; i < lengthList.length; i++){
         if (isNaN(lengthList[i])){
             console.log(lengthList[i]);
             document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in lengths";
             console.log("Error: Non numbers found in lengths");
-            return;
+            return false;
         }
         lengthList[i] = Number(lengthList[i]);
     }
     if (!still_fillable(count_gaps(initGrid),lengthList)){
         document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
         console.log("Error: Cannot fill grid layout with current lengths");
-        return;
+        return false;
     }
     // Checking turning chance data to see if it is valid
     let turnData = document.getElementById("turnChanceEntry").value;
     turnData = turnData.replaceAll(" ","");
     if (isNaN(turnData)) {
         document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
-        return;
+        return false;
     }
     if ((turnData < 0) || (turnData > 1)) {
         document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
-        return;
+        return false;
     }
     
     // getting straightLimit data
