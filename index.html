@@ -19,23 +19,27 @@
     <br><br>
 
     Enter Turning Chance:
-    <input type="text" id="turnChanceEntry" name="turnChanceEntry" value="0.6">
+    <input type="text" id="turnChanceEntry" name="turnChanceEntry" value="1">
 
     <br>
     (Must be a number between 0 and 1)
     <br>
-    (Higher means more "wiggly" lines)
+    (Higher means more "wiggly" lines, which usually means harder puzzles)
     <br>
-    (Previously this was set to 0.25)
-    <br>
-    (Note: numbers close to 1 may take a lot longer to generate)
+    (If its taking a long time to generate, try reducing this number)
+
 
     <br><br>
 
     Enter Highest Length of Straight Line Allowed:
-    <input type="text" id="straightLimitEntry">
+    <input type="text" id="straightLimitEntry" value="5">
     <br>
     (If left blank, there will be no limit)
+
+    <br><br>
+    
+    <input type="checkbox" id="sameColourEntry">
+    <label for="sameColourEntry">Make duplicate lengths the same colour</label>
 
     <br><br>
 
@@ -45,6 +49,14 @@
 
     <div id="generatingMessage"></div>
 
+    <br><br><br><br>
+    Update Notes:
+    <ul>
+        <li>Made the unique solution checker faster, so it should be possible to have turning chance 1 now!</li>
+        <li>Turning chance 1 does take a little longer but I think the puzzles are a lot harder/more interesting</li>
+        <li>Added the option to make noodles of the same length the same colour</li>
+    </ul>
+
     </div><div class="column" id="settingsGridHolder" style="font-size:17px;">
 
     Click the tiles on the grid to remove/add them from the puzzle:
@@ -53,6 +65,8 @@
 
     </div></div>
 
+
+<script src="../generator.js" type="module"></script>
 
 
 <!--Main Javascript-->
@@ -208,9 +222,12 @@ function gen_pressed() {
             straightLimit = 82; //ie, no limit
         }
 
+        // getting colourDuping data
+        let colourDuping = document.getElementById("sameColourEntry").checked;
+
 
         // Starting the generation of the puzzle
-        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid,straightLimit]);
+        genWorker.postMessage([lengthList,parseFloat(turnData),initGrid,straightLimit,colourDuping]);
         generating = true;
         document.getElementById("generatingMessage").innerHTML = "Currently generating...";
     }
@@ -258,9 +275,9 @@ function display_grid(puzzle){
         let start = noodle.start;
         let end = noodle.end;
         // -1 because need to convert from 1-9 index in 11x11 grid to 0-8 array
-        newElementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.icon;
+        newElementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.colour;
         newElementGrid[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
-        newElementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.icon;
+        newElementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.colour;
         newElementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
     }
 
@@ -307,7 +324,8 @@ function show_sol_pressed (puzzleNum){
                 let tileNum = parseInt(solutionGrid[i+1][j+1]);
                 // removes number to get the colour
                 // sets the colour of the tile to be that colour
-                let tileColour = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
+                let tileIcon = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
+                let tileColour = noodleList[noodleList.map(x => x.icon).indexOf(tileIcon)].colour;
                 elementGrid[i][j].style.backgroundColor = tileColour;
 
 
@@ -318,8 +336,8 @@ function show_sol_pressed (puzzleNum){
                 // 0 = down, 1 = up, 2 = right, 3 = left
                 let beforeAfter = [4,4];
                 for (let k = 0; k < 4; k++){
-                    // if the tile is the same noodle (colour)
-                    if (adjacentTiles[k].replace(/[0-9]/g, '') == tileColour){
+                    // if the tile is the same noodle (icon)
+                    if (adjacentTiles[k].replace(/[0-9]/g, '') == tileIcon){
                         // checks for tiles before or after in the noodle
                         if (parseInt(adjacentTiles[k]) == (tileNum-1)){
                             beforeAfter[0] = k;
@@ -334,7 +352,7 @@ function show_sol_pressed (puzzleNum){
                 if (beforeAfter.includes(4)) {
                     let noodleList = puzzleData[1][1];
                     for (let k = 1; k < noodleList.length; k++){
-                        if (noodleList[k].icon == tileColour){
+                        if (noodleList[k].icon == tileIcon){
                             elementGrid[i][j].innerHTML = String(noodleList[k].length);
                         }
                     }
@@ -370,9 +388,9 @@ function show_sol_pressed (puzzleNum){
             let start = noodle.start;
             let end = noodle.end;
             // note -1 because need to convert from string grid 1-9 to element grid 0-8
-            elementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.icon;
+            elementGrid[start[0]-1][start[1]-1].style.backgroundColor = noodle.colour;
             elementGrid[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
-            elementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.icon;
+            elementGrid[end[0]-1][end[1]-1].style.backgroundColor = noodle.colour;
             elementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
         }
         
@@ -407,7 +425,10 @@ function get_adjacent_num(grid,row,column){
         }
     }
     //sorts in descending order
-    nums.sort();
+    //note sort does alphabetical sort by default, NOT numerical
+    nums.sort(function(a, b) {
+        return a - b;
+      });
     nums.reverse();
     return nums;
 }

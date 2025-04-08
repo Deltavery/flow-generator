@@ -2,11 +2,12 @@
 // the play space is the 9x9 grid within, so indexes for those may start at 1
 
 class NoodleObject{
-	constructor(icon,length,start,end){
+	constructor(icon,length,start,end,colour="black"){
 		this.icon= icon;
 		this.length = length;
 		this.start = start;
 		this.end = end;
+        this.colour = colour;
 	}
 }
 
@@ -48,7 +49,10 @@ function get_adjacent_num(grid,row,column){
         }
     }
     //sorts in descending order
-    nums.sort();
+    //note sort does alphabetical sort by default, NOT numerical
+    nums.sort(function(a, b) {
+        return a - b;
+      });
     nums.reverse();
     return nums;
 }
@@ -186,7 +190,7 @@ function still_fillable(gapList,lengthList){
 // does not affect original grid
 // noodle is in form ["string to put on grid",length integer]
 // turn change is probability (between 0 and 1) to turn regardless of reaching a dead end
-function place_noodle(inputGrid,noodle,turnChance=0.25,straightLimit = 81){
+function place_noodle(inputGrid,noodle,turnChance,straightLimit){
     let grid = structuredClone(inputGrid);
     // icon: string that will be filled into the grid
     let icon = noodle[0];
@@ -283,6 +287,7 @@ function show_grid(grid){
 	}
 }
 
+// note does NOT work for 2d arrays
 function are_arrays_equal(array1,array2){
 	if (array1.length != array2.length){
 		return false;
@@ -325,52 +330,93 @@ function find_paths(grid,start,end,movesLeft,icon){
 // does not affect original list
 // if it fails, returns false
 // solverTimeout is time in seconds
-// ... if it takes longer than that to do 1% of the grids, it stops and fails
-function solve_noodles(grid,inNoodles,solverTimeout = 0.02){
-	let finalGrids = [];
+// ... if it estimates longer than that to do the grids, it stops and fails
+function solve_noodles(grid,inNoodles,solverTimeout = 5){
     let noodles = structuredClone(inNoodles);
-    // gets the longest noodle from the list first
-	let currentNoodle = noodles.reduce((prev, current) => (prev && prev.length > current.length) ? prev : current);
-    // removes the selected noodle from the list
-	noodles = noodles.filter(function(item){return (item != currentNoodle)});
-	let start = currentNoodle.start;
-	let end = currentNoodle.end;
-	let movesLeft = currentNoodle.length - 1;
-	let icon = currentNoodle.icon;
-    //if there are no other noodles, uses the starting grid
-	if (noodles.length == 0){ 
-		return find_paths(grid,start,end,movesLeft,icon);
-	}
-    //if there are other noodles, puts them on the grid first
-	let partialGrids = solve_noodles(grid,noodles); 
-    // if that layer fails, e.g. took too long, this layer fails too
-    if (partialGrids == false){
-        return false
-    }
-    // otherwise, tries to place the noodle on each grid with all the other noodles placed on it
-	let gridsToCheck = partialGrids.length;
-    let startTime = Date.now()*1000;
-	console.log(gridsToCheck);
-	for(let i = 0;i<gridsToCheck;i++){
-        // if theres a lot of grids to check and its 1% through them, checks time taken
-        // if time taken is longer than solverTimeout, fails (returns false)
-        if ((gridsToCheck >= 100) && (i == Math.floor(gridsToCheck/100))){
-            if (((Date.now()*1000) - startTime) > solverTimeout){
-                console.log((Date.now()*1000) - startTime);
-                return false
+    // the grids that each iteration recieves to try and place noodles on
+    let partialGrids = [grid]
+
+    while (noodles.length > 0){
+        // gets the shortest noodle from the list and removes it
+        let currentNoodle = noodles.reduce((prev, current) => (prev && prev.length < current.length) ? prev : current);
+        noodles = noodles.filter(function(item){return (item != currentNoodle)});
+        // get the data of the current noodle
+        // note "movesLeft" instead of length because thats what find_paths takes
+        let start = currentNoodle.start;
+        let end = currentNoodle.end;
+        let movesLeft = currentNoodle.length - 1;
+        let icon = currentNoodle.icon;
+
+        let gridsToCheck = partialGrids.length;
+
+        // validGrids is essentially a trimmed down version of noodledGrids
+        // doesn't have any of the grids that fail the checks
+        let validGrids = [];
+
+        console.log(gridsToCheck);
+
+        // for each grid that the previous noodles were successfully placed on
+
+        let startTime = Date.now();
+
+        for (let i=0;i<gridsToCheck;i++){
+            // TIMEOUT CHECK
+            // if theres a lot of grids to check and its 1% through them, checks time taken
+            // if estimated time to complete loop is longer than solverTimeout, fails (returns false)
+            if ((gridsToCheck >= 100) && (i == Math.floor(gridsToCheck/100))){
+                // solver timeout because *1000 to convert to milliseconds, /100 to extrapolate to 100% grids done
+                if (((Date.now()) - startTime) > (solverTimeout*10)){
+                    return false
+                }
             }
+
+            // gets all ways to place the current noodle on that grid
+            let noodledGrids = find_paths(partialGrids[i],start,end,movesLeft,icon);
+            
+
+            // note: could make it not do the checks if its the last noodle?
+
+            // for each way placed, checks if it is a valid placement
+            // if it is, adds it to the list of grids for the next noodle to be placed on
+            for (let j=0;j<noodledGrids.length;j++){
+                // STILL FILLABLE CHECK
+                let gridNoStartEnd = noodledGrids[j];
+                let remainingLengths = [];
+                for (let k = 0; k < noodles.length; k++){
+                    remainingLengths.push(noodles[k].length);
+                    // removes all the starting and ending "X"s to not interfere with counting gaps
+                    let tempStart = noodles[k].start;
+                    let tempEnd = noodles[k].end;
+                    gridNoStartEnd[tempStart[0]][tempStart[1]] = " ";
+                    gridNoStartEnd[tempEnd[0]][tempEnd[1]] = " ";
+                }
+                // if its not still fillable, not added to validGrids
+                if (!still_fillable(count_gaps(gridNoStartEnd),remainingLengths)){
+                    continue;
+                }
+
+                // REMAINING NOODLES BLOCKED CHECK
+                // (if fail, continue)
+
+                // Adds it to the list of grids for the next noodle to be placed on
+                validGrids.push(noodledGrids[j]);
+            }
+
         }
-		finalGrids = finalGrids.concat(find_paths(partialGrids[i],start,end,movesLeft,icon));
-	}
-    return finalGrids;
+
+        partialGrids = validGrids;
+    }
+    return partialGrids;
 }
+
+
 
 // returns solved grid if the given grid and noodles has exactly 1 solution, else false
 // does not affect original grid
 // noodles is a list of noodle objects
 // solverTimeout is time in seconds
 // ... if it takes longer than that to do 1% of the grids, it stops and fails (returns false)
-function is_unique(grid,noodles,solverTimeout = 0.02){
+function is_unique(grid,noodles,solverTimeout,colourDuping){
     let inputGrid = structuredClone(grid);
     
     // puts a "X" block at each noodle start and end so they dont accidentally path through each other
@@ -380,7 +426,6 @@ function is_unique(grid,noodles,solverTimeout = 0.02){
         inputGrid[start[0]][start[1]] = "X";
         inputGrid[end[0]][end[1]] = "X";
     }
-
     let solverResult = solve_noodles(inputGrid,noodles,solverTimeout);
     if (solverResult == false){
         console.log("Solver timed out");
@@ -388,20 +433,159 @@ function is_unique(grid,noodles,solverTimeout = 0.02){
     } else if (solverResult.length != 1){
         console.log("Solution not unique")
         return false
+    }
+    if (!colourDuping) {
+        return solverResult[0];
     } else {
+        // need to check other combinations of noodles of same colour DONT have ANY solutions
+        let noodleLengths = [];
+        // holds every start and end of the noodle length at the corresponding index
+        let equivTails = [];
+        for (let i=0;i<noodles.length;i++){
+            if (!noodleLengths.includes(noodles[i].length)){
+                noodleLengths.push(noodles[i].length);
+                equivTails.push([noodles[i].start,noodles[i].end]);
+            } else {
+                equivTails[noodleLengths.indexOf(noodles[i].length)].push(noodles[i].start);
+                equivTails[noodleLengths.indexOf(noodles[i].length)].push(noodles[i].end);
+            }
+        }
+        let tailPerms = get_tail_pairs(equivTails);
+        // removes first permutation, as that is the intended one to have a solution
+        tailPerms.splice(0,1);
+        // testing each other permutation to make sure they have no solutions
+        for (let i = 0; i < tailPerms.length; i++){
+            // getting the list of noodle objects to try a solution for
+            let permNoodles = [];
+            // looping through every stard/end pair in the permutation
+            let lengthIndex = 0;
+            let coordIndex = 0;
+            while (tailPerms[i].length > lengthIndex){
+                console.log(tailPerms[1]);
+                // takes a pair of coordinates from the first "length"
+                let newStartEnd = tailPerms[i][lengthIndex].slice(coordIndex,coordIndex+2);
+                // adds it as a noodle
+                permNoodles.push(new NoodleObject("icon",noodleLengths[lengthIndex],newStartEnd[0],newStartEnd[1]));
+
+                // goes to the next pair
+                // if the length has no more pairs, goes to the next length
+                coordIndex = coordIndex + 2;
+                if (coordIndex >= tailPerms[i][lengthIndex].length) {
+                    coordIndex = 0;
+                    lengthIndex = lengthIndex + 1;
+                }
+                
+            }
+            console.log(tailPerms[1]);
+            // for testing, can remove
+            console.log("Noodle permutation found:")
+            for (let j = 0; j < permNoodles.length; j++){
+                console.log("noodle:");
+                console.log(permNoodles[j].length);
+                console.log(permNoodles[j].start);
+                console.log(permNoodles[j].end);
+            }
+
+
+            
+            let permSolverResult = solve_noodles(inputGrid,permNoodles,solverTimeout);
+            if (!(permSolverResult.constructor === Array)){
+                console.log("Other permutation solver timed out");
+                return false;
+            } else if (permSolverResult.length != 0){
+                console.log("Other permutation had solution");
+                return false;
+            }
+
+        }
+        // if it has gotten through all the other permutations, ie none had a solution
+        // returns the successful solution as usual
+        console.log("No other permutations have a solution")
         return solverResult[0];
     }
 }
+
+
+// takes in an array of subarrays
+// returns an array of arrays like the input
+// in every possible pairing of the elements in the subarrays
+// eg [[1,2,3,4],[5,6]] = [[[1,2,3,4],[5,6]], [[1,3,2,4],[5,6]], [[1,4,2,3],[5,6]]]
+// returns clones so changes dont affect the original
+function get_tail_pairs(inputArray){
+    // terminating case for recursion
+    // if there is only one sublist, return the unique pairings of that sublist
+    if (inputArray.length == 1){
+        // note mapping is so that pairings are still contained an array of length 1, as it was recieved
+        return get_unique_pairings(inputArray[0]).map((x) => [x]);
+    }
+    let allCombos = [];
+    // get all pairings of the first element
+    let firstPairings = get_unique_pairings(inputArray[0]).map((x) => [x]);
+    // get all the unique combinations of the remaining elements
+    let remainCombos = get_tail_pairs(inputArray.slice(1));
+    // add each combo of those to the array to return
+    for (let i = 0; i < firstPairings.length; i++){
+        for (let j = 0; j < remainCombos.length; j++){
+            allCombos.push(firstPairings[i].concat(remainCombos[j]));
+        }
+    }
+    return allCombos;
+}
+
+// takes in an array
+// returns array with the elements at the two indexes swapped
+// returns clones, so changes do not affect the original
+function to_swapped(inputArray,index1,index2){
+    let cloneArray = structuredClone(inputArray);
+    let index2Element = cloneArray[index2];
+    cloneArray[index2] = cloneArray[index1];
+    cloneArray[index1] = index2Element;
+    return cloneArray;
+}
+
+// takes in an array
+// returns array of arrays containing each unique way to pair the elements of the input together
+// pairs are index 0,1 index 2,3 etc
+// eg [1,2,3,4] -> [[1,2,3,4],[1,3,2,4],[1,4,2,3]]
+// does not affect input array
+// works recursively, pairing the first element with each possible element
+// ... then calling itself to get the unique pairings for the remaining elements
+function get_unique_pairings(inputArray){
+    // terminating case for recursion
+    // if it is only 2 elements, that is the only unique pairing
+    if (inputArray.length == 2){
+        return [structuredClone(inputArray)]
+    }
+    let allPairings = [];
+    // looping through potential SECOND elements, so starts at 1 not 0
+    for (let i = 1; i < (inputArray.length); i++){
+        // array with the original second element swapped with the current one
+        let swappedArray = to_swapped(inputArray,1,i)
+        // gets all pairings of the remaining elements in the array
+        let remainingPairings = get_unique_pairings(swappedArray.slice(2));
+        for (let j = 0; j < remainingPairings.length; j++){
+            // adds the current first two elements with each unique pairing of the remaining elements to the array
+            allPairings.push(swappedArray.slice(0,2).concat(remainingPairings[j]));
+        }
+    }
+    return allPairings;
+
+
+
+
+}
+
 
 // doesnt affect the input grid
 // randomly places a noodle, then does does checks to see if the puzzle is still finishable
 // if not, returns false
 // if yes, then repeats with the next noodle until completion
 // inputNoodles list of ["string to put on grid", length]
-function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02,straightLimit=81){
+function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping){
     let grid = structuredClone(inputGrid);
     let finalNoodles = [];
     let noodles = structuredClone(inputNoodles);
+    let coloursList = ["red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategray","goldenrod","seagreen","slategray","teal","saddle brown","lavender"];
     shuffle_array(noodles);
     // lengths of the noodles at the corresponding indexes to the noodles
     let remainingLengths = noodles.map(x => x[1]);
@@ -433,11 +617,19 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 1
 
         // if noodle is placed successfully:
         grid = noodleResult[0];
-        finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2]));
+        // adds the noodle object to array
+        // if the length has already been used and colour duping is on, uses the same colour as that length
+        if (finalNoodles.map(x => x.length).includes(noodle[1]) && colourDuping){
+            let sameLengthIndex = finalNoodles.map(x => x.length).indexOf(noodle[1]);
+            finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2],finalNoodles[sameLengthIndex].colour));
+        // otherwise, uses a new colour
+        } else {
+            finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2],coloursList.splice(0,1)[0]));
+        }
     }
 
     // once all noodles have been placed on the grid
-    let uniqueResult = is_unique(inputGrid,finalNoodles,solverTimeout);
+    let uniqueResult = is_unique(inputGrid,finalNoodles,solverTimeout,colourDuping);
     if (uniqueResult == false){
         return false
     }
@@ -453,30 +645,66 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 1
 // turn chance is chance for noodle to turn regardless of reaching dead end
 // try cap is amount of times to try place a noodle before giving up
 // solver timeout is maximum time taken to check 1% of the grids when solving before giving up
-function generate_puzzle(inputGrid,inputNoodles,turnChance = 0.25,tryCap = 100,solverTimeout=0.02,straightLimit = 81){
+function generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping){
     let result = false;
     while (result == false){
-        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit);
+        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping);
     }
     return result;
 }
 
 function worker_called(genParams){
     console.log("Input checks passed");
-    let coloursList = ["red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategray","goldenrod","seagreen","slategray","teal","saddle brown","lavender"];
+    let iconsList = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t"];
     //let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
-	let noodleList = [];
+
     let lengthsList = genParams[0];
     let turnChance = genParams[1];
     let initGrid = genParams[2];
     let straightLimit = genParams[3];
-    console.log(genParams);
+    let colourDuping = genParams[4];
+    // assigning colours to lengths
+    let noodleList = [];
     for (let i = 0; i < lengthsList.length; i++){
-        noodleList.push([coloursList[i],lengthsList[i]]);
+        noodleList.push([iconsList[i],lengthsList[i]]);
     }
-    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,0.02,straightLimit);
+    console.log(noodleList);
+    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,5,straightLimit,colourDuping);
     postMessage(puzzle);
 }
+
+
+function unit_test(){
+    let row01 = ["X","X","X","X","X","X","X","X","X","X","X"];
+    let row02 = ["X"," "," "," "," "," "," ","X","X","X","X"];
+    let row03 = ["X","X"," "," ","X"," "," ","X","X","X","X"];
+    let row04 = ["X","X"," ","X","X","X"," ","X","X","X","X"];
+    let row05 = ["X","X"," "," ","X"," "," ","X","X","X","X"];
+    let row06 = ["X","X"," "," "," "," "," "," ","X","X","X"];
+    let row07 = ["X","X","X","X","X","X","X","X","X","X","X"];
+    let row08 = ["X","X","X","X","X","X","X","X","X","X","X"];
+    let row09 = ["X","X","X","X","X","X","X","X","X","X","X"];
+    let row10 = ["X","X","X","X","X","X","X","X","X","X","X"];
+    let row11 = ["X","X","X","X","X","X","X","X","X","X","X"];
+
+    let initGrid = [row01,row02,row03,row04,row05,row06,row07,row08,row09,row10,row11];
+
+    let noodleList = [new NoodleObject("a",6,[1,1],[1,6]),new NoodleObject("b",6,[5,2],[5,7]),new NoodleObject("c",5,[2,3],[4,3]),new NoodleObject("d",5,[2,5],[4,5])];
+
+    
+    let result = is_unique(initGrid,noodleList,5,true);
+    if (result != false){
+        show_grid(result);
+    } else {
+        console.log("FAIL");
+    }
+    
+
+    //console.log(get_tail_pairs([[1,2,3,4],[5,6,7,8]]));
+}
+
+
+//-----=====MAIN PROGRAM=====-----
 
 
 //runs when worker.postMessage() is ran in main code
@@ -485,39 +713,7 @@ onmessage = function(genParams){
     worker_called(genParams.data)
 }
 
+//unit_test();
 
 
-
-//-----=====MAIN PROGRAM=====-----
-
-
-//worker_called();
-
-/*
-if(window!=self){
-    worker_called();
-}
-
-
-
-
-
-let row01 = ["X","X","X","X","X","X","X","X","X","X","X"];
-let row02 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row03 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row04 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row05 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row06 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row07 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row08 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row09 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row10 = ["X"," "," "," "," ","X"," "," "," "," ","X"];
-let row11 = ["X","X","X","X","X","X","X","X","X","X","X"];
-
-let initGrid = [row01,row02,row03,row04,row05,row06,row07,row08,row09,row10,row11];
-
-
-test_me();
-
-*/
 
