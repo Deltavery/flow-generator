@@ -367,6 +367,10 @@ function save_pressed(){
         document.getElementById("errorMessage").innerHTML = "Cant save preset: Please enter a name";
         return;
     }
+    if (nameEntry == "default"){
+        document.getElementById("errorMessage").innerHTML = "Cant save preset: Please do not enter default as the name";
+        return;
+    }
     if (nameEntry.includes(",")){
         document.getElementById("errorMessage").innerHTML = "Cant save preset: Please do not use commas in name";
         return;
