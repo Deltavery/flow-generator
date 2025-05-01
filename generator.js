@@ -437,7 +437,8 @@ function is_unique(grid,noodles,solverTimeout,colourDuping){
     if (!colourDuping) {
         return solverResult[0];
     } else {
-        // need to check other combinations of noodles of same colour DONT have ANY solutions
+        // need to check other combinations of noodles of same length (therefore colour) DONT have ANY solutions
+        // holds each unique noodle length
         let noodleLengths = [];
         // holds every start and end of the noodle length at the corresponding index
         let equivTails = [];
@@ -550,7 +551,14 @@ function to_swapped(inputArray,index1,index2){
 // does not affect input array
 // works recursively, pairing the first element with each possible element
 // ... then calling itself to get the unique pairings for the remaining elements
+// NOTE: ADDITIONAL CHECK. IF FIRST TWO TERMS ARE EQUAL JUST RETURNS INITIAL LIST SINCE THAT MEANS ITS NOODLES LENGTH 1
 function get_unique_pairings(inputArray){
+    // this is ONLY relevant for this program, remove if copying to something else
+    if (inputArray.length >= 2){
+        if (are_arrays_equal(inputArray[0],inputArray[1])){
+            return [inputArray];
+        }
+    }
     // terminating case for recursion
     // if it is only 2 elements, that is the only unique pairing
     if (inputArray.length == 2){
@@ -581,11 +589,10 @@ function get_unique_pairings(inputArray){
 // if not, returns false
 // if yes, then repeats with the next noodle until completion
 // inputNoodles list of ["string to put on grid", length]
-function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping){
+function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping,noodleData){
     let grid = structuredClone(inputGrid);
     let finalNoodles = [];
     let noodles = structuredClone(inputNoodles);
-    let coloursList = ["red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategray","goldenrod","seagreen","slategray","teal","saddle brown","lavender"];
     shuffle_array(noodles);
     // lengths of the noodles at the corresponding indexes to the noodles
     let remainingLengths = noodles.map(x => x[1]);
@@ -617,14 +624,15 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTime
 
         // if noodle is placed successfully:
         grid = noodleResult[0];
+
         // adds the noodle object to array
-        // if the length has already been used and colour duping is on, uses the same colour as that length
-        if (finalNoodles.map(x => x.length).includes(noodle[1]) && colourDuping){
-            let sameLengthIndex = finalNoodles.map(x => x.length).indexOf(noodle[1]);
-            finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2],finalNoodles[sameLengthIndex].colour));
-        // otherwise, uses a new colour
-        } else {
-            finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2],coloursList.splice(0,1)[0]));
+        // gets the colour of the noodle
+        // loops through noodleData, finds the element corresponding to this noodles length
+        // then uses that colour
+        for (let i = 0; i < noodleData.length; i++){
+            if (noodle[1] == noodleData[i][0]){
+                finalNoodles.push(new NoodleObject(noodle[0],noodle[1],noodleResult[1],noodleResult[2],noodleData[i][2]));
+            }
         }
     }
 
@@ -645,10 +653,10 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTime
 // turn chance is chance for noodle to turn regardless of reaching dead end
 // try cap is amount of times to try place a noodle before giving up
 // solver timeout is maximum time taken to check 1% of the grids when solving before giving up
-function generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping){
+function generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping,noodleData){
     let result = false;
     while (result == false){
-        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping);
+        result = try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTimeout,straightLimit,colourDuping,noodleData);
     }
     return result;
 }
@@ -658,18 +666,30 @@ function worker_called(genParams){
     let iconsList = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t"];
     //let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
 
-    let lengthsList = genParams[0];
+    let noodleData = genParams[0];
     let turnChance = genParams[1];
     let initGrid = genParams[2];
     let straightLimit = genParams[3];
-    let colourDuping = genParams[4];
-    // assigning colours to lengths
+    let colourDuping = true;
+
+    // creating noodleList from noodleData
+    // needs to be a list of pairs [icon,length]
     let noodleList = [];
-    for (let i = 0; i < lengthsList.length; i++){
-        noodleList.push([iconsList[i],lengthsList[i]]);
+    let iconIndex = 0;
+    console.log(noodleData);
+    for (let i = 0; i < noodleData.length; i++){
+        for (let j = 0; j < noodleData[i][1].length; j++){
+            if (noodleData[i][1][j] == true){
+                noodleList.push([iconsList[iconIndex],noodleData[i][0]]);
+                iconIndex = iconIndex + 1;
+            }
+        }
     }
     console.log(noodleList);
-    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,5,straightLimit,colourDuping);
+
+
+
+    let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,5,straightLimit,colourDuping,noodleData);
     postMessage(puzzle);
 }
 
