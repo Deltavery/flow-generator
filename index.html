@@ -1,8 +1,22 @@
 <!DOCTYPE html>
 <html>
+
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
 <body>
 
-    <link rel="stylesheet" href="stylesheet.css">
+    <div class = "navBar">
+        <img src = "logo.png" class = "logo"> 
+        Noodle Puzzle Generator
+        <div style = "width:5%"></div>
+        <a href="index.html" class="hyperButton activeButton">Generate Puzzles</a>
+        <a href="puzzles.html?difficulty=Tutorial" class="hyperButton">Review Puzzles</a>
+        <a href="final.html" class="hyperButton">Final Puzzles</a>
+    </div>
+
+    <br>
 
     <div id = "noodleZoneAndCreator" class = "row">
         <div id = "noodleZone" class = "row"></div>
@@ -16,6 +30,8 @@
             <div id="newNoodleErrorBox" style="color:red"></div>
         </div>
     </div>
+
+    <br>
 
     <div class="row"><div class = "column50">
 
@@ -78,13 +94,23 @@
     </div></div>
 
     
+<!--Utility (doesnt affect page) Functions Script-->
+<script src="utilityfunctions.js"></script>
 
+<!--Installing Database Script-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-
+<!--Database Code-->
+<script src="databasescript.js"></script>
 
 
 <!--Main Javascript-->
 <script>
+
+// refreshes the page
+//window.location.reload(true);
+
+
 // tracks whether the web worker is currently generating a puzzle
 // (Doesnt let it start another if true)
 let generating = false;
@@ -119,9 +145,15 @@ genWorker.onmessage = function(event) {
         console.log(noodle.end);
     }
 
-    display_grid(puzzle);
+    // saves puzzle to database (with saved = false)
+    let puzzleId = insert_puzzle(puzzle);
+
+    // displays the puzzle on the page
+    display_new_puzzle(puzzle,puzzleId);
     generating = false;
     document.getElementById("generatingMessage").innerHTML = "Done!";
+
+    
 };
 
 // generating the grid to change puzzle size
@@ -146,8 +178,6 @@ for (let i = 0; i < 9; i++){
 
 
 setup_page();
-
-
 
 
 // -----===== FUNCTIONS =====-----
@@ -346,9 +376,13 @@ function add_noodle_pressed(){
 // checks the preset drop down menu
 // if a saved preset with that name exists, loads it
 function load_pressed() {
+
+    // gets the name of the currently selected preset
     let presetName = document.getElementById("presetSelect").value;
+
+    // gets the name (first element) of each saved preset
     let presetNameList = savedPresets.map(x => x[0]);
-    // the first element of each savedPreset is its name
+
     if (presetNameList.includes(presetName)){
         let presetIndex = presetNameList.indexOf(presetName);
         // the second element of each savedPreset is the list of parameters
@@ -451,20 +485,15 @@ function save_preset(preset){
 
     // convert and save the 2d grid to local storage
     // gridString separates by semicolon, then separates subarrays by commas
-    let gridString = "";
-    let grid = preset[1][2];
-    for (let i = 0; i < 11; i++){
-        for (let j = 0; j < 11; j++){
-            gridString = gridString + grid[i][j] + ",";
-        }
-        gridString = gridString.slice(0,-1) + ";"; 
-    }
-    gridString = gridString.slice(0,-1); 
+    let gridString = grid_to_string(preset[1][2]);
     localStorage.setItem(presetName + "gridArray",gridString);
 
     // save the straight limit to local storage
     localStorage.setItem(presetName + "straightLimit",String(preset[1][3]));
 }
+
+
+
 
 // reads a preset from the local storage and returns it
 function read_preset(presetName) {
@@ -479,12 +508,16 @@ function read_preset(presetName) {
 
     // for each noodle length
     for (let i = 0; i < rawNoodleDataArray.length; i++){
+
         // the single length's array that will be pushed to the new noodleData
         let presetLengthData = [];
+
         // the split string corresponding to a single length's data
         let rawLengthArray = rawNoodleDataArray[i].split(";");
+
         // adds length integer
         presetLengthData.push(parseInt(rawLengthArray[0]));
+
         // adds list of activation booleans
         let boolList = [];
         let boolStrings = rawLengthArray[1].split(",");
@@ -492,14 +525,13 @@ function read_preset(presetName) {
             boolList.push(boolStrings[j] == "true");
         }
         presetLengthData.push(boolList);
+
         // adds noodle colour string
         presetLengthData.push(rawLengthArray[2]);
         
         // pushes to new noodleData array
         presetNoodleData.push(presetLengthData);
     }
-    
-
     
     // adds noodle data to preset to return
     newPreset[1].push(presetNoodleData);
@@ -509,11 +541,7 @@ function read_preset(presetName) {
 
     // get 2d grid array
     let gridString = localStorage.getItem(presetName + "gridArray");
-    let rowStrings = gridString.split(";");
-    let newGrid = [];
-    for (let i = 0; i < 11; i++){
-        newGrid.push(rowStrings[i].split(","));
-    }
+    let newGrid = string_to_grid(gridString);
     newPreset[1].push(newGrid);
 
     // get straight limit (integer)
@@ -665,9 +693,7 @@ function update_grid(newGrid){
     for (let i = 1; i <= 9; i++){
         for (let j = 1; j <= 9; j++){
             if (initGrid[i][j] != newGrid[i][j]){
-                console.log("icon: " + newGrid[i][j])
                 let newColour = colours[icons.indexOf(newGrid[i][j])];
-                console.log(newColour);
                 // sets tile colour to the new one
                 settingsGridElements[i-1][j-1].style.backgroundColor = newColour;
                 // adds or subtracts from sum depending on new one
@@ -683,7 +709,11 @@ function update_grid(newGrid){
 
 
 // creates html objects for displaying the puzzle solution and adds them to the document
-function display_grid(puzzle){
+
+// puzzle is format [solvedGrid,finalNoodles]
+// where finalNoodles is an array of Noodle objects
+function display_new_puzzle(puzzle,puzzleId){
+
     // unique identifier for which puzzle it is
     // starts at 0, increases for each generated
     let puzzleNum = activePuzzles.length;
@@ -698,10 +728,79 @@ function display_grid(puzzle){
     puzzleTitle.innerHTML = "Puzzle " + String(puzzleNum + 1);
     document.body.appendChild(puzzleTitle);
 
+    // div that contains the grid of tiles
+    let gridContainer = document.createElement("div");
+    document.body.appendChild(gridContainer);
+
+    // creating the grid of tiles
+    let newElementGrid = display_grid(puzzle,gridContainer);
+
+    // creates centred div to store puzzle options in
+    let centreDiv = document.createElement("div");
+    centreDiv.className = "centre";
+    document.body.appendChild(centreDiv);
+
+    // creating the toggle solution button
+    let solButton = document.createElement("button");
+    solButton.innerHTML = "Toggle Solution";
+    solButton.className = "solutionButton";
+    solButton.onclick = function () {
+        show_sol_pressed(puzzleNum);
+    }
+    centreDiv.appendChild(solButton);
+
+
+    // creating the save puzzle row
+    let saveRow = document.createElement("div");
+    saveRow.className = "centreRow";
+    saveRow.innerHTML = "Save Puzzle:";
+    centreDiv.appendChild(saveRow);
+
+    // creating the save buttons
+    let difficulties = ["Tutorial", "Easy", "Medium", "Hard"];
+    for (let i = 0; i < difficulties.length; i++){
+        let saveButton = document.createElement("button");
+        saveButton.innerHTML = difficulties[i];
+        saveButton.className = "saveButton";
+        saveButton.onclick = function () {
+            save_sol_pressed(puzzleNum,difficulties[i]);
+        }
+        saveRow.appendChild(saveButton);
+    }
+
+
+    // adds to the list of puzzles currently being displayed
+    activePuzzles.push([false,puzzle,newElementGrid,solButton,saveRow,puzzleId]);
+
+    document.body.appendChild(document.createElement("br"));
+    document.body.appendChild(document.createElement("br"));
+}
+
+function save_sol_pressed(puzzleNum,difficulty){
+
+    // replaces the buttons with success text
+    activePuzzles[puzzleNum][4].innerHTML = "Saved! (" + difficulty + ")";
+
+    // updates the corresponding row in the database
+    let puzzleId = activePuzzles[puzzleNum][5];
+    save_puzzle(puzzleId, difficulty, true);
+}
+
+// creates html grid elements and appends them to the given containerDiv
+// returns 2d array with every object created
+// takes puzzle [solved 2d grid, noodle object array] and a html div to append to
+// fills it with the UNSOLVED puzzle
+function display_grid(puzzle, containerDiv){
+
+    // div that contains all the tile elements
     let gridElement = document.createElement("div");
     gridElement.className = "puzzleGrid";
 
-    document.body.appendChild(gridElement);
+    // adds the grid to the container
+    containerDiv.appendChild(gridElement);
+
+    // 2d array container containing all elements
+    // same format as grid
     let newElementGrid = [];
     for (let i = 0; i < 9; i++){
         let newRow = [];
@@ -719,6 +818,8 @@ function display_grid(puzzle){
         }
         newElementGrid.push(newRow);
     }
+
+    // colouring in the noodle starts and ends with the corresponding colour
     for (let i = 0; i < puzzle[1].length; i++){
         let noodle = puzzle[1][i];
         let start = noodle.start;
@@ -730,25 +831,7 @@ function display_grid(puzzle){
         newElementGrid[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
     }
 
-    // creating the button
-    let solButton = document.createElement("button");
-
-    solButton.innerHTML = "Toggle Solution";
-    solButton.className = "solutionButton";
-
-    solButton.onclick = function () {
-        show_sol_pressed(puzzleNum);
-    }
-
-    let centreDiv = document.createElement("div");
-    centreDiv.className = "centre";
-    document.body.appendChild(centreDiv);
-    centreDiv.appendChild(solButton);
-
-    activePuzzles.push([false,puzzle,newElementGrid,solButton]);
-
-    document.body.appendChild(document.createElement("br"));
-    document.body.appendChild(document.createElement("br"));
+    return newElementGrid;
 }
 
 function show_sol_pressed (puzzleNum){
@@ -765,26 +848,31 @@ function show_sol_pressed (puzzleNum){
         // note going 0-8, but solution grid uses 1-9 so +1s included later
         for (let i = 0; i < 9; i++){
             for (let j = 0; j < 9; j++){
+
                 // each string in the grid starts with a number to say which order they're in
                 let tileNum = parseInt(solutionGrid[i+1][j+1]);
-                // removes number to get the colour
-                // sets the colour of the tile to be that colour
+
+                // removes number to get the icon
                 let tileIcon = solutionGrid[i+1][j+1].replace(/[0-9]/g, '');
+
+                // sets the colour of the tile to be the corresponding colour of the noodle with that icon
                 if (tileIcon != "X"){
                     let tileColour = noodleList[noodleList.map(x => x.icon).indexOf(tileIcon)].colour;
                     elementGrid[i][j].style.backgroundColor = tileColour;
                 }
                 
-
                 // checking adjacent tiles to see what string it should contain
                 let adjacentTiles = get_adjacent(solutionGrid,i+1,j+1);
+
                 // contains two numbers based off where the noodle went before and after the current tile
                 // 4 is default value and will only remain if it is the start or end
                 // 0 = down, 1 = up, 2 = right, 3 = left
                 let beforeAfter = [4,4];
                 for (let k = 0; k < 4; k++){
+
                     // if the tile is the same noodle (icon)
                     if (adjacentTiles[k].replace(/[0-9]/g, '') == tileIcon){
+
                         // checks for tiles before or after in the noodle
                         if (parseInt(adjacentTiles[k]) == (tileNum-1)){
                             beforeAfter[0] = k;
@@ -792,21 +880,25 @@ function show_sol_pressed (puzzleNum){
                             beforeAfter[1] = k;
                         }
                     }
-
                 }
+
                 // if it IS the start or end of a noodle
                 // sets string to the noodles length
                 if (beforeAfter.includes(4)) {
-                    let noodleList = puzzleData[1][1];
                     for (let k = 1; k < noodleList.length; k++){
                         if (noodleList[k].icon == tileIcon){
                             elementGrid[i][j].innerHTML = String(noodleList[k].length);
                         }
                     }
+
                 // if it IS NOT the start or the end, looks up the corresponding line to draw
                 // sets the inner html to that string
                 } else {
+
+                    // array that correlates beforeAfter to a unicode symbol with the right line
                     let correspondingStrings = [[[0,1],"&#x2502"],[[0,2],"&#x250C"],[[0,3],"&#x2510"],[[1,0],"&#x2502"],[[1,2],"&#x2514"],[[1,3],"&#x2518"],[[2,0],"&#x250C"],[[2,1],"&#x2514"],[[2,3],"&#x2500"],[[3,0],"&#x2510"],[[3,1],"&#x2518"],[[3,2],"&#x2500"]];
+                    
+                    // loops through each possible line
                     for (let k = 0; k < 12; k++){
                         if (are_arrays_equal(beforeAfter,correspondingStrings[k][0])){
                             elementGrid[i][j].innerHTML = correspondingStrings[k][1];
@@ -848,180 +940,6 @@ function show_sol_pressed (puzzleNum){
     }
 }
 
-//A bunch of functions from the generator.js file
-//Used to check whether a grid is fillable
-
-function min_distance(start,end){
-	return (Math.abs(start[0] - end[0]) + Math.abs(start[1] - end[1]));
-}
-
-//returns strings in adjacent cells in order [below,above,right,left]
-function get_adjacent(grid,row,column){ 
-	return [grid[row + 1][column],grid[row - 1][column],grid[row][column + 1],grid[row][column - 1]];
-}
-
-//returns list of strings of unique numbers adjacent to cell in descending order
-function get_adjacent_num(grid,row,column){ 
-    let nums = [];
-    let adjCells = get_adjacent(grid,row,column);
-    for (let i = 0;i<4;i++){
-        // if cell is a number AND is not already in array
-        // for some reason " " is considered a number so theres the extra check in there
-        if((!isNaN(adjCells[i]) && (adjCells[i] != " ")) && (!nums.includes(adjCells[i]))){
-            nums.push(adjCells[i]);
-        }
-    }
-    //sorts in descending order
-    //note sort does alphabetical sort by default, NOT numerical
-    nums.sort(function(a, b) {
-        return a - b;
-      });
-    nums.reverse();
-    return nums;
-}
-
-// returns a list of the size of each "gap" in the grid (groups of " " spaces adjacent to each other)
-// adjacent being up right left down
-function count_gaps(grid){
-    let tempGrid = structuredClone(grid);
-    let nextNum = 0;
-    //list of strings of numbers currently on the grid
-    let finalNums = [];
-    //tracks how much the number of the same index in finalNums is used
-    let numCounts = []; 
-    for (let i = 1; i < 10; i++){
-        for (let j = 1; j < 10; j++){
-            //skips over non empty spaces
-            if (tempGrid[i][j] != " "){
-                continue
-            }
-            let adjNums = get_adjacent_num(tempGrid,i,j);
-            //if no adjacent numbers, uses a new one
-            if (adjNums.length == 0){
-                tempGrid[i][j] = String(nextNum);
-                finalNums.push(String(nextNum));
-                numCounts.push(1)
-                nextNum = nextNum + 1;
-            // if one number adjacent, uses that
-            } else if (adjNums.length == 1) {
-                tempGrid[i][j] = adjNums[0];
-                // updates count of that number in numCounts
-                let numIndex = finalNums.indexOf(adjNums[0]);
-                numCounts[numIndex] = numCounts[numIndex] + 1;
-            } else {
-                //takes lowest number from adjacent numbers
-                let remainNum = adjNums.pop();
-                //changes current tile to the lower number and updates the count
-                tempGrid[i][j] = remainNum;
-                let remainIndex = finalNums.indexOf(remainNum);
-                numCounts[remainIndex] = numCounts[remainIndex] + 1;
-
-                //removes other numbers from the list of used numbers
-                for (let k = 0; k < adjNums.length; k++){
-                    let numIndex = finalNums.indexOf(adjNums[k]);
-                    finalNums.splice(numIndex,1);
-                    numCounts.splice(numIndex,1);
-                }
-                //remainIndex = finalNums.indexOf(remainNum);
-                //replaces said numbers with the lowest one
-                for (let k = 1; k <= i; k++){
-                    for (let l = 1; l <= 9; l++){
-                        if (adjNums.includes(tempGrid[k][l])){
-                            tempGrid[k][l] = remainNum;
-                            numCounts[remainIndex] = numCounts[remainIndex] + 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return numCounts;
-}
-
-// returns [[list of sums], list of combinations [4,4,6,etc] at corresponding index]
-// note affects original list
-function get_combinations_recur(lengthList){
-    if (lengthList.length == 0){
-        return [[0],[[]]];
-    }
-    let current = lengthList.pop();
-    let otherCombs = get_combinations_recur(lengthList);
-    let allCombs = [otherCombs[0].concat(otherCombs[0].map(n => n + current)),otherCombs[1].concat(otherCombs[1].map(x => x.concat([current])))];
-    return allCombs;
-
-}
-
-// returns [[list of sums], list of combinations [4,4,6,etc] at corresponding index]
-// does not affect original list
-// does not include the zero sum
-function get_combinations(lengthList){
-    let tempList = structuredClone(lengthList);
-    let results = get_combinations_recur(tempList);
-    // removes the 0 combination (and corresponding [] used to sum to it)
-    results[0].shift();
-    results[1].shift();
-    return results;
-}
-
-// returns true if the integers in lengthList can be summed to create the integers in gapList
-// (otherwise false)
-// each integer in lengthList only being used once
-// works recursively, picking one gap seeing if it can be summed with the lengths
-// ... then repeating with the remaining gaps and lengths
-// cannot be over or under, must be exact
-function still_fillable(gapList,lengthList){
-    // if all lengths are used, then it is fillable (terminating case for recursion)
-    if (lengthList.length == 0){
-        return true
-    }
-    let remainingGaps = structuredClone(gapList);
-    let gap = remainingGaps.pop();
-    let combinations = get_combinations(lengthList);
-    let valid = [];
-    // if it is not possible to fill the current gap with the remaining lengths
-    // returns false (not still fillable)
-    if (!combinations[0].includes(gap)){
-        return false;
-    // gets every combination of lengths that can fill said gap
-    } else {
-        for (let i = 0; i < combinations[0].length; i++){
-            if (combinations[0][i] == gap){
-                valid.push(combinations[1][i]);
-            }
-        }
-    }
-    // for each combination, repeats the function with the remaining gaps and lengths
-    // if any of them are true, then it is still fillable
-    // if not, then it is not
-    let fillable = false;
-    for (let i = 0; i < valid.length; i++){
-        // comb is a list of integers that add to the current gap
-        let comb = valid[i]
-        let remainingLengths = structuredClone(lengthList);
-        // removes all numbers in comb from the list of lengths
-        for (let j = 0; j < comb.length;j++){
-            let numIndex = remainingLengths.indexOf(comb[j]);
-            remainingLengths.splice(numIndex,1);
-        }
-        if (still_fillable(remainingGaps,remainingLengths)){
-            fillable = true;
-        }
-    }
-    return fillable;
-}
-
-function are_arrays_equal(array1,array2){
-	if (array1.length != array2.length){
-		return false;
-	}
-	for (let i = 0; i<array1.length; i++){
-		if (array1[i] != array2[i]){
-			return false;
-		}
-	}
-	return true;
-
-}
 
 </script>
 </body>
