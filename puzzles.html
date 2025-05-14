@@ -65,6 +65,10 @@
 
             <br>
 
+            <div class = "puzzleReviewNoodleCount"></div>
+
+            <br>
+
             <div class = "hyperButton puzzleReviewToggleButton">Toggle Solution</div>
 
         </div>
@@ -275,6 +279,10 @@ function update_display (){
             newRow.style.backgroundColor = uniqueColours[j];
             noodleColoursDisplay.appendChild(newRow);
         }
+
+        // updates count of noodles
+        let noodleCountDisplay = leftColumnDiv.getElementsByClassName("puzzleReviewNoodleCount").item(0);
+        noodleCountDisplay.innerHTML = "Total: " + String(noodles.length) + " noodles";
 
         // FOR GRID:
         let gridDiv = leftColumnDiv.nextElementSibling;
