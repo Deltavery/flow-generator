@@ -97,6 +97,13 @@ input[type=checkbox] {
     justify-content: center;
 }
 
+.rowWrap {
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+}
+
 /* For the boxes that contain a single noodle colours settings */
 .noodleColumn {
     text-align: center;

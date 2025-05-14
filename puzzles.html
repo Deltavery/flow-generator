@@ -271,7 +271,7 @@ function update_display (){
         // for each unique colour, adds a line to the display (in the corresponding colour)
         for (let j = 0; j < uniqueColours.length; j++){
             let newRow = document.createElement("div");
-            newRow.innerHTML = colourCounts[j] + "x " + uniqueColours[j] + " (" + colourLengths[j] + ")<br>";
+            newRow.innerHTML = colourCounts[j] + "x " + get_colour_display_name(uniqueColours[j]) + " (" + colourLengths[j] + ")<br>";
             // if its an obstacle, says that instead of the colour
             if (colourLengths[j] == 1){
                 newRow.innerHTML = colourCounts[j] + "x Obstacle";

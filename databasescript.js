@@ -105,7 +105,7 @@ async function get_puzzles_of_difficulty(difficulty){
 
     // if the database contains no puzzles of the corresponding difficulty, returns an empty array
     if (data.length == 0){
-        console.log("no puzzles found");
+        //console.log("no puzzles found");
         return [];
     }
     
