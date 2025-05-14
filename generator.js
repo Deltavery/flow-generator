@@ -619,6 +619,8 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTime
 
         if (count == tryCap){
             //console.log("Timed out at noodle " + noodle[0]);
+            //show_grid(grid);
+            //console.log(noodle[1]);
             return false
         }
 
