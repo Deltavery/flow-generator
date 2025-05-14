@@ -20,7 +20,113 @@
 
     <br>
 
-    This is still a work in progress :)
+    <div id = "tutorialSection">
+        <!-- Displays which difficulty is selected and the amount saved/finalised-->
+        <div id = "puzzleReviewTitleTutorial" style="font-size: 30px; text-decoration:underline">Loading...</div>
+        <br>
+        <!-- Contains all puzzles displayed-->
+        <div id = "puzzleReviewContainerTutorial"></div>
+    </div>
+
+    <div id = "easySection">
+        <div id = "puzzleReviewTitleEasy" style="font-size: 30px; text-decoration:underline"></div>
+        <br>
+        <div id = "puzzleReviewContainerEasy"></div>
+    </div>
+
+    <div id = "mediumSection">
+        <div id = "puzzleReviewTitleMedium" style="font-size: 30px; text-decoration:underline"></div>
+        <br>
+        <div id = "puzzleReviewContainerMedium"></div>
+    </div>
+
+    <div id = "hardSection">
+        <div id = "puzzleReviewTitle" style="font-size: 30px; text-decoration:underline"></div>
+        <br>
+        <div id = "puzzleReviewContainer"></div>
+    </div>
+
+    <!-- Default puzzle display that can be copied later (same as review screen, but without right column)-->
+    <div id = "puzzleReviewDefault" class = "puzzleReviewDisplay">
+            
+        <!-- Left column of puzzle review info-->
+        <div class = "puzzleReviewLeft">
+
+            <div class = "puzzleReviewID">Puzzle ID: Default</div>
+
+            <br>
+
+            Noodle Colours:
+            <div class = "puzzleReviewNoodles"></div>
+
+            <br>
+
+            <div class = "puzzleReviewNoodleCount"></div>
+
+            <br>
+
+            <div class = "hyperButton puzzleReviewToggleButton">Toggle Solution</div>
+
+        </div>
+
+        <!-- Grid for puzzle review -->
+        <div class = "puzzleReviewGrid">
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+            <div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div><div class="puzzleReviewTile"></div>
+        </div>
+
+    </div>
+
+
+<!--Utility (doesnt affect page) Functions Script-->
+<script src="utilityfunctions.js"></script>
+
+<!--Installing Database Script-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!--Database Code-->
+<script src="databasescript.js"></script>
+
+<!--Main code-->
+<script>
+
+// -----===== GLOBAL VARIABLES =====-----
+
+// the difficulty selected
+// string with first letter capitalised
+const globalDifficulty = new URLSearchParams(window.location.search).get("difficulty");
+
+// array of puzzle objects corresponding to the current difficulty
+let globalPuzzles = [];
+
+// quotas for amount of saved and finalised puzzles
+// used for titles of the review page
+// in order [Tutorial, Easy, Medium, Hard]
+const globalSavedQuotas = [5,20,20,20]; 
+const globalFinalisedQuotas = [5,20,20,20]; 
+
+// tracks whether solutions are toggled on or off
+let globalSolutionToggles = [];
+
+// -----===== MAIN PROGRAM =====-----
+
+on_load();
+
+// -----===== FUNCTIONS =====-----
+
+// runs on the page loading
+async function on_load (difficulty) {
+
+}
+
+</script>
 
 </body>
 </html> 

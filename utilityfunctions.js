@@ -1,3 +1,25 @@
+// gets the display name of a colour string and returns it
+// if its not in the list of colours with special display names, just returns the string
+function get_colour_display_name(colour){
+
+    // list of colour strings that have a different display name
+    let colourStrings = ["#00B5E2","#FF9E1B","#963CBD","#EEDC00","#DF1995","#7ACC00"];
+    // display names at the corresponding index
+    let correspondingNames = ["Blue (306)", "Orange (1375)", "Purple (7442)", "Yellow (3965)", "Magenta (225)", "Green (2286)"];
+
+    let nameIndex = colourStrings.indexOf(colour);
+    
+    // ifs not in the list
+    if (nameIndex == -1){
+        return colour;
+    }
+
+    // otherwise
+    return correspondingNames[nameIndex];
+}
+
+
+
 // convert a 2d array grid to a string
 // separates first by semicolon, then by comma
 function grid_to_string(grid) {

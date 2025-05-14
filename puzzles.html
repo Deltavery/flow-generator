@@ -346,7 +346,9 @@ function update_display (){
         let username = document.getElementById("usernameEntry").value;
 
         if (username == "") {
-            ratingButtonsDiv.innerHTML = "Please enter a username<br>to rate this puzzle."
+            ratingButtonsDiv.innerHTML = "Please enter a username<br>to rate this puzzle.";
+        } else if (!is_username_valid(username)) {
+            ratingButtonsDiv.innerHTML = "Please do not use commas or thumbs up or down emojis in the username";
         } else {
             let alreadyRated = false;
 
@@ -676,13 +678,41 @@ function update_difficulty_buttons(difficulty) {
 // runs when the username field is typed in
 function username_typed () {
 
-    console.log(document.getElementById("usernameEntry").value);
+    let username = document.getElementById("usernameEntry").value;
+
+    console.log(username);
 
     // refreshes puzzle displays so the review buttons are updated
     update_display();
 
-    // updates localstorage to track this username for future use
-    localStorage.setItem("username", document.getElementById("usernameEntry").value);
+
+    // if valid, updates localstorage to track this username for future use
+    if (!is_username_valid(username)){
+        return;
+    }
+    localStorage.setItem("username", username);
+}
+
+// returns true if username meets the following conditions, otherwise false
+// no commas
+// no &#128077 (thumbsup)
+// no &#128078 (thumbsdown)
+function is_username_valid(username){
+
+    if (username.includes(",")){
+        return false;
+    }
+
+    if (username.includes("&#128077")){
+        return false;
+    }
+
+    if (username.includes("&#128078")){
+        return false;
+    }
+
+    return true;
+
 }
 
 </script>

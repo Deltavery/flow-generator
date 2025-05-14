@@ -225,7 +225,7 @@ function get_preset_names(){
 // to include only default presets and those saved locally
 function update_presets(){
     // resets preset list to default(s)
-    savedPresets = [["default",[[[8,[true,true],"red"],[9,[true],"orange"],[11,[true,false],"yellow"],[13,[true],"green"],[14,[false],"blue"],[15,[true],"purple"],[17,[true],"hotpink"],[19,[false],"lightblue"],[1,[false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
+    savedPresets = [["default",[[[8,[true,true],"#00B5E2"],[9,[true],"#FF9E1B"],[11,[true,false],"#963CBD"],[13,[true],"#EEDC00"],[14,[false],"#DF1995"],[15,[true],"#7ACC00"],[17,[true],"hotpink"],[19,[false],"lightblue"],[1,[false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
     //savedPresets = [["default",[[[8,[true],"red"],[7,[true,true],"orange"],[9,[true,true],"yellow"],[11,[true],"green"],[14,[true],"blue"],[18,[true],"purple"],[1,[false,false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
     //savedPresets.push(["NIGHTMARE MODE",[[[6,[true],"red"],[7,[true,true],"orange"],[9,[true,true],"yellow"],[11,[true],"green"],[14,[true],"blue"],[18,[true],"purple"],[1,[false,false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," ","X"," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5,true]]);
 
@@ -293,9 +293,13 @@ function refresh_noodles() {
         newDropdown.value = "Colour";
         // adds each (remaining) colour as an option to the dropdown menu
         for (let j = 0; j < coloursList.length; j++){
+
             let newOption = document.createElement("option");
-            newOption.innerHTML = coloursList[j];
             newOption.value = coloursList[j];
+
+            // sets the text to say the colours display name
+            newOption.innerHTML = get_colour_display_name(coloursList[j]);
+            
             newDropdown.appendChild(newOption);
         }
         // on picking a colour, updates the noodleData, then updates the GUI
@@ -330,7 +334,7 @@ function refresh_noodles() {
 function gen_pressed() {
     if (!generating){
         // Starting the generation of the puzzle
-        let parameters = get_parameters();
+        let parameters = get_check_parameters();
         if (parameters == false){
             return;
         }
@@ -569,7 +573,7 @@ function setting_tile_clicked(row,column){
 
 // returns a list of all colours not currently being used by a noodle
 function get_remaining_colours(){
-    let coloursList = ["red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategrey","goldenrod","seagreen","slategrey","teal","saddlebrown","lavender"];
+    let coloursList = ["#00B5E2","#FF9E1B","#963CBD","#EEDC00","#DF1995","#7ACC00","red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategrey","goldenrod","seagreen","slategrey","teal","saddlebrown","lavender"];
     //removes colours already being used from the list
     for (let i = 0; i < noodleData.length; i++){
         let removeIndex = coloursList.indexOf(noodleData[i][2]);
@@ -618,7 +622,7 @@ function get_length_list(){
 
 // gets the current genParams and returns it
 // also used to save layouts to load them later
-function get_parameters(){
+function get_check_parameters(){
     // Checking length data to see if it is valid
     let lengthList = get_length_list();
     if (lengthList.length > 20){
@@ -640,6 +644,33 @@ function get_parameters(){
         console.log("Error: Cannot fill grid layout with current lengths");
         return false;
     }
+    // Checking turning chance data to see if it is valid
+    let turnData = document.getElementById("turnChanceEntry").value;
+    turnData = turnData.replaceAll(" ","");
+    if (isNaN(turnData)) {
+        document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
+        return false;
+    }
+    if ((turnData < 0) || (turnData > 1)) {
+        document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
+        return false;
+    }
+    
+    // getting straightLimit data
+    let straightLimit = document.getElementById("straightLimitEntry").value;
+    straightLimit = parseInt(straightLimit);
+    if (isNaN(straightLimit)) {
+        straightLimit = 82; //ie, no limit
+    }
+
+    return [noodleData,parseFloat(turnData),initGrid,straightLimit];
+}
+
+// version of get_check_parameters that is less restrictive on generate-able inputs, used for getting parameters to save
+function get_parameters(){
+    // get length list 
+    let lengthList = get_length_list();
+
     // Checking turning chance data to see if it is valid
     let turnData = document.getElementById("turnChanceEntry").value;
     turnData = turnData.replaceAll(" ","");
