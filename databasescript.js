@@ -92,6 +92,39 @@ async function update_puzzle_ratings(puzzleId, newRatings){
 
 }
 
+// adds a rating to the list of ratings in the database
+async function add_puzzle_rating(puzzleId, newRating){
+
+    // gets the current puzzle rating
+    const { data, error } = await dataObject.from("puzzles").select().eq("puzzleid",puzzleId);
+
+    console.log(error);
+
+    let newRatings = data[0].ratings + "," + newRating;
+
+    const { error: error2 } = await dataObject.from("puzzles").update({
+        ratings: newRatings
+    }).eq("puzzleid", puzzleId);
+
+}
+
+// removes a rating to the list of ratings in the database
+async function remove_puzzle_rating(puzzleId, rating){
+
+    // gets the current puzzle ratings
+    const { data, error } = await dataObject.from("puzzles").select().eq("puzzleid",puzzleId);
+
+    let prevRatings = data[0].ratings.split(",");
+
+    prevRatings.splice(prevRatings.indexOf(rating),1);
+    let newRatings = String(prevRatings);
+
+    const { error: error2 } = await dataObject.from("puzzles").update({
+        ratings: newRatings
+    }).eq("puzzleid", puzzleId);
+
+}
+
 // gets all (saved) puzzles of a certain difficulty from the database
 // returns an array of objects (one for each puzzle)
 // with attributes puzzleId (int), grid (2d array), ratings (array of strings), finalised (boolean), noodles (array of objects)

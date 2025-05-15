@@ -41,6 +41,14 @@
 
     <br>
 
+    <!-- Section containing the show finalised checkbox -->
+    <div class = "genericBar">
+        Show finalised puzzles?
+        <input type="checkbox" id="showFinalisedCheckbox" onclick="update_display()">
+    </div>
+
+    <br>
+
     <!-- Displays which difficulty is selected and the amount saved/finalised-->
     <div id = "puzzleReviewTitle" style="font-size: 30px; text-decoration:underline">Loading...</div>
 
@@ -237,9 +245,12 @@ function update_display (){
         let newReviewDiv = document.getElementById("puzzleReviewDefault").cloneNode(true);
         newReviewDiv.id = "reviewDiv" + String(i);
 
-        // adds it to the page
-        containerDiv.appendChild(newReviewDiv);
-
+        // unless it is a finalised puzzle when show finalised is disabled...
+        if (!((document.getElementById("showFinalisedCheckbox").checked == false) && (puzzle.finalised == true))){
+            // adds it to the page
+            containerDiv.appendChild(newReviewDiv);
+        }
+        
         // FOR LEFT COLUMN:
         let leftColumnDiv = newReviewDiv.firstElementChild;
 
@@ -412,6 +423,8 @@ function update_display (){
         containerDiv.appendChild(document.createElement("br"));
 
     }
+
+
 
 }
 
@@ -597,7 +610,7 @@ function rating_button_pressed (puzzle, emoji, username){
     puzzle.ratings.push(emoji + username);
 
     // update the database
-    update_puzzle_ratings(puzzle.puzzleId,String(puzzle.ratings));
+    add_puzzle_rating(puzzle.puzzleId,emoji + username);
 
     // update the display
     update_display();
@@ -615,10 +628,11 @@ function remove_rating_pressed (puzzle, username) {
 
     // removes the rating of the given username
     let removeIndex = ratingUsernames.indexOf(username);
+    let ratingToRemove = puzzle.ratings[removeIndex];
     puzzle.ratings.splice(removeIndex,1);
 
     // update the database
-    update_puzzle_ratings(puzzle.puzzleId,String(puzzle.ratings));
+    remove_puzzle_rating(puzzle.puzzleId,ratingToRemove);
 
     // update the display
     update_display();
