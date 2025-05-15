@@ -249,6 +249,18 @@ input[type=checkbox] {
     display: none;
 }
 
+.genericBar {
+    display: flex;
+    align-items: center;
+    height: 65px;
+    width: 25%;
+    background-color: lightgrey;
+    padding: 1%;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 125%;
+}
+
 
 
 

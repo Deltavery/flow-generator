@@ -20,6 +20,16 @@
 
     <br>
 
+    <!-- Section containing the open as image option -->
+    <div class = "genericBar">
+        <div class="hyperButton" onclick="download_pressed()">Save as Image</div>
+        <div class="hyperButton" onclick="show_all_pressed()">Show all solutions</div>
+    </div>
+
+    <br>
+
+    <div id = "screenshotZone">
+
     <div id = "tutorialSection">
         <!-- Displays which difficulty is selected and the amount saved/finalised-->
         <div id = "puzzleReviewTitleTutorial" style="font-size: 30px; text-decoration:underline">Loading...</div>
@@ -44,6 +54,8 @@
         <div id = "puzzleReviewTitleHard" style="font-size: 30px; text-decoration:underline"></div>
         <br>
         <div id = "puzzleReviewContainerHard" class = "rowWrap"></div>
+    </div>
+
     </div>
 
     <!-- Default puzzle display that can be copied later (same as review screen, but without right column)-->
@@ -91,6 +103,9 @@
 <!--Installing Database Script-->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!--Installing Screen Capture Script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <!--Database Code-->
 <script src="databasescript.js"></script>
 
@@ -112,6 +127,11 @@ const globalFinalisedQuotas = [5,20,20,20];
 // array with  4 elements
 // tracks whether solutions are toggled on or off
 let globalSolutionToggles = [];
+
+// stores all of the grid elements used for displaying the puzzle grids
+// only used by the button that turns all solutions on
+// contains an array for each difficulty
+let globalGridElementsArray = [[],[],[],[]];
 
 // -----===== MAIN PROGRAM =====-----
 
@@ -242,6 +262,10 @@ function update_display(difficulty){
             gridElements.push(newRow);
         }
 
+        // adds it to the list of global grid elements
+        // this is only used to have a button to turn all the solutions on
+        globalGridElementsArray[difficultyIndex].push(gridElements);
+
         // updates the tiles to show the puzzle unsolved
         show_grid_unsolved(puzzle, gridElements);
 
@@ -250,6 +274,9 @@ function update_display(difficulty){
         toggleSolButton.onclick = function () {
             toggle_sol_pressed(puzzle,toggleSolButton,gridElements,difficultyIndex);
         }
+
+        // Updates toggle solution button to not appear when the page is saved as a png
+        toggleSolButton.setAttribute("data-html2canvas-ignore",true);
 
 
     }
@@ -406,6 +433,52 @@ function show_grid_unsolved (puzzle, gridElements) {
         gridElements[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
     }
 }
+
+
+// runs when the "download" button is pressed
+// converts the puzzles to a png and downloads it
+// uses html2canvas which is installed before this script
+async function download_pressed () {
+
+    let canvas = await html2canvas(document.getElementById("screenshotZone"), {backgroundColor:"darkgrey", windowWidth: "760px"});
+
+    var imgURL = canvas.toDataURL("image/png");
+
+    window.open(imgURL, '_blank').focus();
+
+}
+
+// runs when the "show all solutions" button is pressed
+// sets all puzzles to be showing their solutions
+function show_all_pressed () {
+
+    let difficulties = ["Tutorial","Easy","Medium","Hard"];
+
+    for (let i = 0; i < difficulties.length; i++){
+
+        // gets puzzles of corresponding difficulty
+        let puzzles = globalPuzzles[i];
+
+        // for each puzzle
+        for (let j = 0; j < puzzles.length; j++){
+
+            // updates the grid
+            show_grid_solved(puzzles[j], globalGridElementsArray[i][j]);
+
+            // updates the boolean keeping track of if its showing the solved version
+            globalSolutionToggles[i][j] = true;
+        }
+
+        
+    }
+
+
+
+
+
+}
+
+
 
 </script>
 
