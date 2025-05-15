@@ -33,6 +33,7 @@
     <div id = "tutorialSection">
         <!-- Displays which difficulty is selected and the amount saved/finalised-->
         <div id = "puzzleReviewTitleTutorial" style="font-size: 30px; text-decoration:underline">Loading...</div>
+        <div id = "puzzleReviewTitleQuotaTutorial" style="font-size: 30px; text-decoration:underline"></div>
         <br>
         <!-- Contains all puzzles displayed-->
         <div id = "puzzleReviewContainerTutorial" class = "rowWrap"></div>
@@ -40,18 +41,21 @@
 
     <div id = "easySection">
         <div id = "puzzleReviewTitleEasy" style="font-size: 30px; text-decoration:underline"></div>
+        <div id = "puzzleReviewTitleQuotaEasy" style="font-size: 30px; text-decoration:underline"></div>
         <br>
         <div id = "puzzleReviewContainerEasy" class = "rowWrap"></div>
     </div>
 
     <div id = "mediumSection">
         <div id = "puzzleReviewTitleMedium" style="font-size: 30px; text-decoration:underline"></div>
+        <div id = "puzzleReviewTitleQuotaMedium" style="font-size: 30px; text-decoration:underline"></div>
         <br>
         <div id = "puzzleReviewContainerMedium" class = "rowWrap"></div>
     </div>
 
     <div id = "hardSection">
         <div id = "puzzleReviewTitleHard" style="font-size: 30px; text-decoration:underline"></div>
+        <div id = "puzzleReviewTitleQuotaHard" style="font-size: 30px; text-decoration:underline"></div>
         <br>
         <div id = "puzzleReviewContainerHard" class = "rowWrap"></div>
     </div>
@@ -295,9 +299,9 @@ function update_display(difficulty){
         }
 
         // updates title text
-        document.getElementById("puzzleReviewTitle" + difficulty).innerHTML = 
-            difficulty + " (" + String(finalisedCount) + "/" + globalFinalisedQuotas[difficultyIndex] + " Finalised)";
-
+        document.getElementById("puzzleReviewTitle" + difficulty).innerHTML = difficulty;
+        document.getElementById("puzzleReviewTitleQuota" + difficulty).innerHTML = " (" + String(finalisedCount) + "/" + globalFinalisedQuotas[difficultyIndex] + " Finalised)";
+        document.getElementById("puzzleReviewTitleQuota" + difficulty).setAttribute("data-html2canvas-ignore",true);
     }
 
 }
