@@ -448,8 +448,8 @@ async function download_pressed () {
 
     var imgURL = canvas.toDataURL("image/png");
 
-    console.log(imgURL);
-    window.open("image.html?imageURL=" + String(imgURL), '_blank').focus();
+    let newWindow = window.open();
+    newWindow.document.write('<img src="' + imgURL + '" />');
 
 }
 
