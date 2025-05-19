@@ -98,7 +98,7 @@
         <div class = "puzzleReviewRight">
 
             <!-- Difficulty text and buttons-->
-            Difficulty (Click to change)
+            Difficulty (Click to vote)
 
             <div class = "hyperButton difficultyButton">Tutorial</div>
             <div class = "hyperButton difficultyButton">Easy</div>
@@ -323,6 +323,11 @@ function update_display (){
         // FOR RIGHT COLUMN:
         let rightColumnDiv = gridDiv.nextElementSibling;
 
+        // the username currently entered into the input box
+        let username = document.getElementById("usernameEntry").value;
+
+        
+
         // updates difficulty button to have current one highlighted
         // and to have the correct onclick
         let puzzleDifficultyButtons = rightColumnDiv.getElementsByClassName("difficultyButton");
@@ -330,15 +335,35 @@ function update_display (){
 
             let currentButton = puzzleDifficultyButtons.item(j);
 
+            // removes any thumbs up votes from before
+            currentButton.innerHTML = currentButton.innerHTML.replace("&#128077", "");
+            currentButton.title = "";
+
+
             // updates highlight
             if (currentButton.innerHTML == globalDifficulty){
                 currentButton.classList.add("activeButton");
             }
 
+            let buttonDifficulty = currentButton.innerHTML;
+
             // updates onclick
             currentButton.onclick = function () {
-                difficulty_pressed(puzzle, currentButton.innerHTML);
+                difficulty_pressed(puzzle, buttonDifficulty, currentButton, username);
             }
+
+            // array of the votes for the different difficulties
+            // "T", "E", "M", "H"
+            let difficultyVotesLetters = puzzle.difficultyVotes.map(x => x.charAt(0));
+
+            // gives it the correct amount of thumbs up votes
+            for (let k = 0; k < difficultyVotesLetters.length; k++){
+                if (difficultyVotesLetters[k] == buttonDifficulty.charAt(0)){
+                    currentButton.innerHTML = currentButton.innerHTML + "&#128077";
+                    currentButton.title = currentButton.title + puzzle.difficultyVotes[k].slice(1) + " ";
+                }
+            }
+            
 
 
         }
@@ -352,9 +377,6 @@ function update_display (){
 
         // Updates Rating Buttons
         let ratingButtonsDiv = rightColumnDiv.getElementsByClassName("puzzleReviewRatingsButtons").item(0);
-
-        // the username currently entered into the input box
-        let username = document.getElementById("usernameEntry").value;
 
         if (username == "") {
             ratingButtonsDiv.innerHTML = "Please enter a username<br>to rate this puzzle.";
@@ -586,20 +608,87 @@ function show_grid_unsolved (puzzle, gridElements) {
 }
 
 // runs when a difficulty button is pressed
-function difficulty_pressed(puzzle, difficulty) {
+async function difficulty_pressed(puzzle, difficulty, button, username) {
 
-    console.log("difficulty pressed");
+    console.log(difficulty);
 
-    // does nothing if current difficulty clicked
-    if (difficulty == globalDifficulty){
-        return;
+    // gets difficultyvotes as an array
+    let difficultyVotesString = await get_puzzle_difficultyvotes(puzzle.puzzleId);
+    let difficultyVotes = difficultyVotesString.split(",");
+
+    // removes the first character (which encodes difficulty)
+    let difficultyUsernames = difficultyVotes.map(x => x.slice(1));
+
+    // tracks if its clicking on the difficulty its already clicked on, in which case it removes that vote
+    let removingVote = false;
+
+    // if this user has already voted, removes their previous vote from the list
+    if (difficultyUsernames.includes(username)) {
+
+        let usernameIndex = difficultyUsernames.indexOf(username);
+        
+        // if its the same difficulty as the button
+        if (difficultyVotes[usernameIndex].charAt(0) == difficulty.charAt(0)){
+            removingVote = true;
+        }
+
+        // removes from local copies
+        difficultyVotes.splice(usernameIndex,1);
+        difficultyUsernames.splice(usernameIndex,1);
+
+
+
     }
 
-    // updates database
-    update_puzzle_difficulty(puzzle.puzzleId, difficulty);
+    if (!removingVote){
+        // adds new vote
+        // difficultyvotes is an array of "char that encodes difficulty" + "username that voted"
+        difficultyVotes.push(difficulty.charAt(0) + username);
+    }
 
-    // removes it from the local puzzle list
-    remove_local_puzzle(puzzle);
+    
+
+
+
+
+    let difficultyVotesLetters = difficultyVotes.map(x => x.charAt(0));
+
+    let counts = {};
+    for (const vote of difficultyVotesLetters){
+        // question mark means if the value to the left is truthy (exists), does counts[vote] + 1, otherwise does 1
+        counts[vote] = counts[vote] ? counts[vote] + 1 : 1;
+    }
+
+    let newDifficulty = "none";
+    for (const votedDiff of Object.keys(counts)){
+        if ((counts[votedDiff] > 1) && (votedDiff != globalDifficulty.charAt(0))){
+            newDifficulty = votedDiff;
+        }
+    }
+
+    // IF there is now enough votes:
+    if (newDifficulty != "none"){
+
+        console.log(newDifficulty);
+
+        // updates database
+        update_puzzle_difficulty(puzzle.puzzleId, difficulty);
+
+        // removes it from the local puzzle list (and updates display)
+        remove_local_puzzle(puzzle);
+
+    } else {
+
+    // updates local value
+    puzzle.difficultyVotes = difficultyVotes;
+
+    // updates database
+    update_puzzle_difficultyvotes(puzzle.puzzleId,String(difficultyVotes));
+
+    // refreshes the display
+    update_display();
+
+    }
 
 }
 
@@ -693,8 +782,6 @@ function update_difficulty_buttons(difficulty) {
 function username_typed () {
 
     let username = document.getElementById("usernameEntry").value;
-
-    console.log(username);
 
     // refreshes puzzle displays so the review buttons are updated
     update_display();

@@ -75,11 +75,17 @@ async function delete_puzzle(puzzleId){
 }
 
 // updates the difficulty of a puzzle to a new value
+// and resets difficultyvotes
 async function update_puzzle_difficulty(puzzleId, newDifficulty){
+
+    console.log("updating puzzle difficulty");
     
     const { error } = await dataObject.from("puzzles").update({
-        difficulty: newDifficulty
+        difficulty: newDifficulty,
+        difficultyvotes: ""
     }).eq("puzzleid", puzzleId);
+
+    console.log(error);
 
 }
 
@@ -121,6 +127,26 @@ async function remove_puzzle_rating(puzzleId, rating){
 
     const { error: error2 } = await dataObject.from("puzzles").update({
         ratings: newRatings
+    }).eq("puzzleid", puzzleId);
+
+}
+
+// gets the difficultyvotes string of a puzzle
+async function get_puzzle_difficultyvotes(puzzleId){
+
+    console.log("updating puzzle difficultyvotes");
+
+    const { data, error } = await dataObject.from("puzzles").select().eq("puzzleid",puzzleId);
+
+    return data[0].difficultyvotes;
+
+}
+
+// updates the difficultyvotes column of a puzzle
+async function update_puzzle_difficultyvotes(puzzleId, newDifficultyvotes){
+    
+    const { error } = await dataObject.from("puzzles").update({
+        difficultyvotes: newDifficultyvotes
     }).eq("puzzleid", puzzleId);
 
 }
@@ -184,7 +210,8 @@ async function get_puzzles_of_difficulty(difficulty){
             "grid": string_to_grid(puzzle.grid),
             "ratings": puzzle.ratings.split(","),
             "finalised": puzzle.finalised,
-            "noodles": noodles
+            "noodles": noodles,
+            "difficultyVotes": puzzle.difficultyvotes.split(",")
         });
 
     }
