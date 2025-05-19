@@ -11,11 +11,14 @@
     <!-- Navigation Bar -->
     <div class = "navBar">
         <img src = "logo.png" class = "logo"> 
-        Noodle Puzzle Generator
-        <div style = "width:5%"></div>
+        Noodle Puzzles
+        <div style = "width:40%"></div>
+        <!-- Buttons to go to generate and review screens are removed
         <a href="index.html" class="hyperButton">Generate Puzzles</a>
         <a href="puzzles.html?difficulty=Tutorial" class="hyperButton">Review Puzzles</a>
+        -->
         <a href="final.html" class="hyperButton activeButton">Final Puzzles</a>
+        
     </div>
 
     <br>
@@ -241,6 +244,7 @@ function update_display(difficulty){
             // if its an obstacle, says that instead of the colour
             if (colourLengths[j] == 1){
                 newRow.innerHTML = colourCounts[j] + "x Obstacle";
+                newRow.style.color = "white";
             }
             newRow.style.backgroundColor = uniqueColours[j];
             noodleColoursDisplay.appendChild(newRow);

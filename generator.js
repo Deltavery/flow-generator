@@ -645,6 +645,7 @@ function try_generate_puzzle(inputGrid,inputNoodles,turnChance,tryCap,solverTime
     }
 
     console.log("Found Solution");
+    show_grid(uniqueResult);
     return [uniqueResult,finalNoodles];
 }
 
@@ -692,6 +693,7 @@ function worker_called(genParams){
 
 
     let puzzle = generate_puzzle(initGrid,noodleList,turnChance,1000,5,straightLimit,colourDuping,noodleData);
+    puzzle.push(genParams);
     postMessage(puzzle);
 }
 

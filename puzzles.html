@@ -20,6 +20,10 @@
 
     <br>
 
+    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px" oninput="passcode_typed()">
+
+    <div id = "passwordRestricted" style="display:none">
+
     <div class = "row">
 
         <!-- Buttons for selecting difficulty to view -->
@@ -135,6 +139,8 @@
 
     </div>
 
+    </div>
+
 
 
 <!--Utility (doesnt affect page) Functions Script-->
@@ -199,6 +205,15 @@ async function on_load () {
     // creates elements for every puzzle display and adds them to the page
     update_display();
 
+}
+
+// runs whenever the user types in the passcode box
+// if its correct, removes the passcode and makes the page visible
+function passcode_typed() {
+    if (document.getElementById("passcodeEntry").value == "balloondog") {
+        document.getElementById("passcodeEntry").style.display = "none";
+        document.getElementById("passwordRestricted").style.display = "inline";
+    }
 }
 
 // removes a puzzle locally and keeps everything else correct
@@ -286,6 +301,7 @@ function update_display (){
             // if its an obstacle, says that instead of the colour
             if (colourLengths[j] == 1){
                 newRow.innerHTML = colourCounts[j] + "x Obstacle";
+                newRow.style.color = "white";
             }
             newRow.style.backgroundColor = uniqueColours[j];
             noodleColoursDisplay.appendChild(newRow);
@@ -610,8 +626,6 @@ function show_grid_unsolved (puzzle, gridElements) {
 // runs when a difficulty button is pressed
 async function difficulty_pressed(puzzle, difficulty, button, username) {
 
-    console.log(difficulty);
-
     // gets difficultyvotes as an array
     let difficultyVotesString = await get_puzzle_difficultyvotes(puzzle.puzzleId);
     let difficultyVotes = difficultyVotesString.split(",");
@@ -668,8 +682,6 @@ async function difficulty_pressed(puzzle, difficulty, button, username) {
 
     // IF there is now enough votes:
     if (newDifficulty != "none"){
-
-        console.log(newDifficulty);
 
         // updates database
         update_puzzle_difficulty(puzzle.puzzleId, difficulty);

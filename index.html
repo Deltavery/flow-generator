@@ -18,6 +18,10 @@
 
     <br>
 
+    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px" oninput="passcode_typed()">
+
+    <div id = "passwordRestricted" style="display:none">
+
     <div id = "noodleZoneAndCreator" class = "row">
         <div id = "noodleZone" class = "row"></div>
         <div class = "noodleColumn" style = "width:150px">
@@ -74,7 +78,7 @@
     <br><br>
     
     Save current layout:
-    <input type="text" id="presetNameEntry" value="enter name here">
+    <input type="text" id="presetNameEntry" placeholder="enter name here">
     <input id="saveButton" type="button" value="Save" onclick="save_pressed();" >
 
     <br><br>
@@ -91,7 +95,7 @@
 
     <br>
 
-    </div></div>
+    </div></div></div>
 
     
 <!--Utility (doesnt affect page) Functions Script-->
@@ -132,11 +136,24 @@ let activePuzzles = [];
 // tracks which presets are currently available to the user
 let savedPresets = [];
 
+// tracks all saved puzzles and those generated during this session, as to avoid dupes
+let globalDupeGrids = [];
+
 // runs upon the puzzle being generated
 genWorker.onmessage = function(event) {
+
     console.log("recieved message!");
     let puzzle = event.data;
-    //outElement.innerHTML = event.data;
+
+    console.log(puzzle);
+
+    // if its a dupe, sends it back to try again
+    // puzzle[2] are the parameters used to generate the puzzle
+    if (check_dupe(puzzle)){
+        genWorker.postMessage(puzzle[2]);
+        return;
+    }
+
     for (let i = 0; i < puzzle[1].length; i++){
         let noodle = puzzle[1][i];
         console.log("Icon: " + noodle.icon);
@@ -184,7 +201,7 @@ setup_page();
 
 // runs when the page is loaded
 // allows setup without creating unneccessary global variables
-function setup_page(){
+async function setup_page(){
     
     
     // if there is no local storage, creates one
@@ -204,6 +221,71 @@ function setup_page(){
     // updates the length sum display
     update_length_sum();
 
+    // loads globalDupeGrids
+    // array of 11x11 2d grid arrays, with strings of noodle lengths at noodle ends
+    let difficulties = ["Tutorial","Easy","Medium","Hard"];    
+    for (let i = 0; i < difficulties.length; i++){
+        let puzzleList = await get_puzzles_of_difficulty(difficulties[i]);
+        for (let dupePuzzle of puzzleList) {
+            let newDupeGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
+            for (let dupeNoodle of dupePuzzle.noodles) {
+                newDupeGrid[dupeNoodle.start[0]][dupeNoodle.start[1]] = String(dupeNoodle.length);
+                newDupeGrid[dupeNoodle.end[0]][dupeNoodle.end[1]] = String(dupeNoodle.length);
+            }
+            globalDupeGrids.push(newDupeGrid);
+        }
+    }
+}
+
+// runs whenever the user types in the passcode box
+// if its correct, removes the passcode and makes the page visible
+function passcode_typed() {
+    if (document.getElementById("passcodeEntry").value == "balloondog") {
+        document.getElementById("passcodeEntry").style.display = "none";
+        document.getElementById("passwordRestricted").style.display = "inline";
+    }
+}
+
+// returns true if the puzzle is a dupe and should not be generated
+// dupe against saved puzzles or those generated in this session
+function check_dupe(puzzle){
+
+    // getting this puzzle in the same form as the ones saved for checking dupes
+    let puzzleCheckGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
+    for (let checkNoodle of puzzle[1]) {
+        puzzleCheckGrid[checkNoodle.start[0]][checkNoodle.start[1]] = String(checkNoodle.length);
+        puzzleCheckGrid[checkNoodle.end[0]][checkNoodle.end[1]] = String(checkNoodle.length);
+    }
+
+    show_grid(puzzleCheckGrid);
+
+    let foundCopy = false;
+
+    for (let dupeGrid of globalDupeGrids){
+
+        show_grid(dupeGrid);
+
+        let isThisGridEqual = true;
+
+        for (let i = 0; i < 11; i++){
+            for (let j = 0; j < 11; j++){
+                if (puzzleCheckGrid[i][j] != dupeGrid[i][j]){
+                    isThisGridEqual = false;
+                }
+                
+            }
+        }
+
+        if (isThisGridEqual){
+            foundCopy = true;
+        }
+    }
+
+    if (!foundCopy){
+        globalDupeGrids.push(puzzleCheckGrid);
+    }
+
+    return foundCopy;
 }
 
 // loads all preset names from local storage "presetNames"

@@ -77,15 +77,11 @@ async function delete_puzzle(puzzleId){
 // updates the difficulty of a puzzle to a new value
 // and resets difficultyvotes
 async function update_puzzle_difficulty(puzzleId, newDifficulty){
-
-    console.log("updating puzzle difficulty");
     
     const { error } = await dataObject.from("puzzles").update({
         difficulty: newDifficulty,
         difficultyvotes: ""
     }).eq("puzzleid", puzzleId);
-
-    console.log(error);
 
 }
 
@@ -103,8 +99,6 @@ async function add_puzzle_rating(puzzleId, newRating){
 
     // gets the current puzzle rating
     const { data, error } = await dataObject.from("puzzles").select().eq("puzzleid",puzzleId);
-
-    console.log(error);
 
     let newRatings = data[0].ratings + "," + newRating;
 
@@ -133,8 +127,6 @@ async function remove_puzzle_rating(puzzleId, rating){
 
 // gets the difficultyvotes string of a puzzle
 async function get_puzzle_difficultyvotes(puzzleId){
-
-    console.log("updating puzzle difficultyvotes");
 
     const { data, error } = await dataObject.from("puzzles").select().eq("puzzleid",puzzleId);
 

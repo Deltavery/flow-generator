@@ -231,3 +231,8 @@ function are_arrays_equal(array1,array2){
 }
 
 
+function show_grid(grid){
+	for (let i = 0; i < grid.length; i++){
+		console.log(String(grid[i]))
+	}
+}
