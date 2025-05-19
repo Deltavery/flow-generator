@@ -20,9 +20,9 @@
 
     <br>
 
-    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px" oninput="passcode_typed()">
+    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px; display:none" oninput="passcode_typed()">
 
-    <div id = "passwordRestricted" style="display:none">
+    <div id = "passwordRestricted">
 
     <div class = "row">
 
@@ -182,6 +182,20 @@ on_load();
 // runs on the page loading
 async function on_load () {
 
+    // if the user hasnt logged in today, puts up the password entry and restricts the rest of the page
+    let localLoginDate = localStorage.getItem("lastLoginDate");
+    if (localLoginDate != null){
+        const date = new Date();
+        let currentLoginDate = String(date.getDate()) + String(date.getMonth()) + String(date.getFullYear());
+        if (localLoginDate != currentLoginDate){
+            document.getElementById("passcodeEntry").style.display = "inline";
+            document.getElementById("passwordRestricted").style.display = "none";
+        } 
+    } else {
+        document.getElementById("passcodeEntry").style.display = "inline";
+        document.getElementById("passwordRestricted").style.display = "none";
+    }
+
     // updates the difficulty buttons to highlight the current one
     update_difficulty_buttons(globalDifficulty);
 
@@ -205,6 +219,7 @@ async function on_load () {
     // creates elements for every puzzle display and adds them to the page
     update_display();
 
+
 }
 
 // runs whenever the user types in the passcode box
@@ -213,6 +228,9 @@ function passcode_typed() {
     if (document.getElementById("passcodeEntry").value == "balloondog") {
         document.getElementById("passcodeEntry").style.display = "none";
         document.getElementById("passwordRestricted").style.display = "inline";
+
+        const date = new Date();
+        localStorage.setItem("lastLoginDate", String(date.getDate()) + String(date.getMonth()) + String(date.getFullYear()) );
     }
 }
 

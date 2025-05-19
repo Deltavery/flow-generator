@@ -18,9 +18,9 @@
 
     <br>
 
-    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px" oninput="passcode_typed()">
+    <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px; display:none" oninput="passcode_typed()">
 
-    <div id = "passwordRestricted" style="display:none">
+    <div id = "passwordRestricted">
 
     <div id = "noodleZoneAndCreator" class = "row">
         <div id = "noodleZone" class = "row"></div>
@@ -204,9 +204,23 @@ setup_page();
 async function setup_page(){
     
     
-    // if there is no local storage, creates one
+    // if there is no local storage for presets, creates one
     if (localStorage.getItem("presetNames") == null){
         localStorage.setItem("presetNames","");
+    }
+
+    // if the user hasnt logged in today, puts up the password entry and restricts the rest of the page
+    let localLoginDate = localStorage.getItem("lastLoginDate");
+    if (localLoginDate != null){
+        const date = new Date();
+        let currentLoginDate = String(date.getDate()) + String(date.getMonth()) + String(date.getFullYear());
+        if (localLoginDate != currentLoginDate){
+            document.getElementById("passcodeEntry").style.display = "inline";
+            document.getElementById("passwordRestricted").style.display = "none";
+        } 
+    } else {
+        document.getElementById("passcodeEntry").style.display = "inline";
+        document.getElementById("passwordRestricted").style.display = "none";
     }
     
     // loads presets into savedPresets, and updates the dropdown menu
@@ -243,6 +257,9 @@ function passcode_typed() {
     if (document.getElementById("passcodeEntry").value == "balloondog") {
         document.getElementById("passcodeEntry").style.display = "none";
         document.getElementById("passwordRestricted").style.display = "inline";
+
+        const date = new Date();
+        localStorage.setItem("lastLoginDate", String(date.getDate()) + String(date.getMonth()) + String(date.getFullYear()) );
     }
 }
 
