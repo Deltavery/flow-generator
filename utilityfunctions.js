@@ -3,9 +3,9 @@
 function get_colour_display_name(colour){
 
     // list of colour strings that have a different display name
-    let colourStrings = ["#00B5E2","#FF9E1B","#963CBD","#EEDC00","#DF1995","#7ACC00"];
+    let colourStrings      = ["#00B5E2",    "#FF9E1B",       "#963CBD",       "#FC4C02",    "#EEDC00",       "#DF1995",       "#7ACC00",      "#EABEDB"];
     // display names at the corresponding index
-    let correspondingNames = ["Blue (306)", "Orange (1375)", "Purple (7442)", "Yellow (3965)", "Magenta (225)", "Green (2286)"];
+    let correspondingNames = ["Cyan (306)", "Orange (1375)", "Purple (7442)", "Red (1655)", "Yellow (3965)", "Magenta (225)", "Green (2286)", "Lilac (217)"];
 
     let nameIndex = colourStrings.indexOf(colour);
     
@@ -174,7 +174,7 @@ function get_combinations(lengthList){
 // works recursively, picking one gap seeing if it can be summed with the lengths
 // ... then repeating with the remaining gaps and lengths
 // cannot be over or under, must be exact
-function still_fillable(gapList,lengthList){
+function lengths_fill_gaps(gapList,lengthList){
     // if all lengths are used, then it is fillable (terminating case for recursion)
     if (lengthList.length == 0){
         return true
@@ -208,7 +208,7 @@ function still_fillable(gapList,lengthList){
             let numIndex = remainingLengths.indexOf(comb[j]);
             remainingLengths.splice(numIndex,1);
         }
-        if (still_fillable(remainingGaps,remainingLengths)){
+        if (lengths_fill_gaps(remainingGaps,remainingLengths)){
             fillable = true;
         }
     }

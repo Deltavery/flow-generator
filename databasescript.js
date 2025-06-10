@@ -9,7 +9,7 @@ const dataObject = supabase.createClient("https://bjupfqvkdhjqossdulfm.supabase.
 async function insert_puzzle(puzzle){
 
     // 2d array for the puzzles completed grid 
-    const newGrid = grid_to_string(puzzle[0]);
+    const newGrid = grid_to_string(puzzle.solvedGrid);
 
     // inserts row for this grid to the "puzzles" database
     // note id, saved, approvals have default values
@@ -22,7 +22,7 @@ async function insert_puzzle(puzzle){
     let puzzleId = data[0].puzzleid;
 
     // inserting rows for each noodle to "noodles" database
-    let noodles = puzzle[1];
+    let noodles = puzzle.noodles;
     for (let i = 0; i < noodles.length; i++){
         let noodle = noodles[i];
         const { error } = await dataObject.from("noodles").insert({

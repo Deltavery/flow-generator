@@ -127,7 +127,7 @@ let initGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," ","
 let noodleData = [];
 
 // the web worker that generates the puzzles
-let genWorker = new Worker("generator.js");
+let genWorker = new Worker("supergenerator.js");
 //let genWorker = new Worker(new URL('../generator.js', "http://localhost:8000/website.html"));
 
 // list of lists for each generated puzzle [solutionShowing (true/false), puzzle, elementGrid, button object]
@@ -148,18 +148,9 @@ genWorker.onmessage = function(event) {
     console.log(puzzle);
 
     // if its a dupe, sends it back to try again
-    // puzzle[2] are the parameters used to generate the puzzle
     if (check_dupe(puzzle)){
-        genWorker.postMessage(puzzle[2]);
+        genWorker.postMessage(puzzle.genParams);
         return;
-    }
-
-    for (let i = 0; i < puzzle[1].length; i++){
-        let noodle = puzzle[1][i];
-        console.log("Icon: " + noodle.icon);
-        console.log("Length: " + String(noodle.length));
-        console.log(noodle.start);
-        console.log(noodle.end);
     }
 
     // saves puzzle to database (with saved = false)
@@ -268,19 +259,20 @@ function passcode_typed() {
 function check_dupe(puzzle){
 
     // getting this puzzle in the same form as the ones saved for checking dupes
+    // that is, unsolved 2d array with the lengths as strings at the noodle ends
     let puzzleCheckGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
-    for (let checkNoodle of puzzle[1]) {
+    for (let checkNoodle of puzzle.noodles) {
         puzzleCheckGrid[checkNoodle.start[0]][checkNoodle.start[1]] = String(checkNoodle.length);
         puzzleCheckGrid[checkNoodle.end[0]][checkNoodle.end[1]] = String(checkNoodle.length);
     }
 
-    show_grid(puzzleCheckGrid);
+    //show_grid(puzzleCheckGrid);
 
     let foundCopy = false;
 
     for (let dupeGrid of globalDupeGrids){
 
-        show_grid(dupeGrid);
+        //show_grid(dupeGrid);
 
         let isThisGridEqual = true;
 
@@ -319,14 +311,13 @@ function get_preset_names(){
 
 }
 
-// updates the savedPresets function
+// updates the savedPresets array
 // and dropdown menu html
 // to include only default presets and those saved locally
 function update_presets(){
+
     // resets preset list to default(s)
-    savedPresets = [["default",[[[8,[true,true],"#00B5E2"],[9,[true],"#FF9E1B"],[11,[true,false],"#963CBD"],[13,[true],"#EEDC00"],[14,[false],"#DF1995"],[15,[true],"#7ACC00"],[17,[true],"hotpink"],[19,[false],"lightblue"],[1,[false,false,false,false],"black"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
-    //savedPresets = [["default",[[[8,[true],"red"],[7,[true,true],"orange"],[9,[true,true],"yellow"],[11,[true],"green"],[14,[true],"blue"],[18,[true],"purple"],[1,[false,false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
-    //savedPresets.push(["NIGHTMARE MODE",[[[6,[true],"red"],[7,[true,true],"orange"],[9,[true,true],"yellow"],[11,[true],"green"],[14,[true],"blue"],[18,[true],"purple"],[1,[false,false,false,false,false],"darkslategrey"]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," ","X"," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5,true]]);
+    savedPresets = [["default",[[[8,[true,true],"#00B5E2",true],[9,[true],"#FF9E1B",true],[11,[true,false],"#963CBD",true],[13,[true],"#FC4C02",true],[14,[false],"#EEDC00",true],[15,[true],"#DF1995",true],[17,[true],"#7ACC00",true],[19,[false],"#EABEDB",true],[1,[false,false,false,false],"black",true]],1,[["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]],5]]];
 
     // loads all presets from the local storage
     let presetNames = get_preset_names(); // note this means names cant have commas in them
@@ -408,6 +399,7 @@ function refresh_noodles() {
         }
         newColumn.appendChild(newDropdown);
         newColumn.appendChild(document.createElement("br"));
+
         // creates the remove button
         let newButton = document.createElement("input");
         newButton.type = "button";
@@ -426,6 +418,22 @@ function refresh_noodles() {
             update_length_sum();
         }
         newColumn.appendChild(newButton);
+
+        newColumn.appendChild(document.createElement("br"));
+
+        // creates the allowImmediateTurns checkbox
+        let newCheckbox = document.createElement("input");
+        newCheckbox.type = "checkbox";
+        newCheckbox.checked = noodleData[i][3];
+        // when flipped, flips the corresponding variable
+        newCheckbox.onclick = function () {
+            noodleData[i][3] = !(noodleData[i][3]);
+        }
+        // adds label for the checkbox
+        let newLabel = document.createElement("div");
+        newLabel.innerHTML = "Allow Immediate Turns?";
+        newColumn.appendChild(newLabel);
+        newColumn.appendChild(newCheckbox)
     }
 }
 
@@ -515,7 +523,6 @@ function save_pressed(){
     }
 
     // gets parameters
-    // this has in built checks to see if they are valid for generating
     // if these checks fail, return (dont save)
     let parameters = get_parameters();
     if (parameters == false){
@@ -573,7 +580,9 @@ function save_preset(preset){
         // add the bool list string to the string for this length
         lengthDataString = lengthDataString + boolListString + ";";
         // adds the colour to the string
-        lengthDataString = lengthDataString + presetLengthData[2];
+        lengthDataString = lengthDataString + presetLengthData[2] + ";";
+        // adds the allowImmediateTurns bool to the string
+        lengthDataString = lengthDataString + String(presetLengthData[3]);
 
         // adds this length to the noodleData string, separated by full stops
         noodleDataString = noodleDataString + lengthDataString + ".";
@@ -606,7 +615,7 @@ function read_preset(presetName) {
 
     // get noodleData
     // noodleData has format:
-    // ARRAY OF ELEMENTS of format [noodle length int, [list of noodle activation status booleans], noodle colour string]
+    // ARRAY OF ELEMENTS of format [noodle length int, [list of noodle activation status booleans], noodle colour string, allowImmediateTurns boolean]
     let rawNoodleDataArray = localStorage.getItem(presetName + "noodleData").split(".");
     let presetNoodleData = [];
 
@@ -632,6 +641,14 @@ function read_preset(presetName) {
 
         // adds noodle colour string
         presetLengthData.push(rawLengthArray[2]);
+
+        // adds allowImmediateTurns boolean
+        // if there is no data saved, adds true (so allows immediate turns)
+        if (rawLengthArray.length < 4){
+            presetLengthData.push(true);
+        } else {
+            presetLengthData.push(rawLengthArray[3] == "true");
+        }
         
         // pushes to new noodleData array
         presetNoodleData.push(presetLengthData);
@@ -672,7 +689,7 @@ function setting_tile_clicked(row,column){
 
 // returns a list of all colours not currently being used by a noodle
 function get_remaining_colours(){
-    let coloursList = ["#00B5E2","#FF9E1B","#963CBD","#EEDC00","#DF1995","#7ACC00","red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategrey","goldenrod","seagreen","slategrey","teal","saddlebrown","lavender","black"];
+    let coloursList = ["#00B5E2","#FF9E1B","#963CBD","#FC4C02","#EEDC00","#DF1995","#7ACC00","#EABEDB","red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategrey","goldenrod","seagreen","slategrey","teal","saddlebrown","lavender","black"];
     //removes colours already being used from the list
     for (let i = 0; i < noodleData.length; i++){
         let removeIndex = coloursList.indexOf(noodleData[i][2]);
@@ -738,7 +755,7 @@ function get_check_parameters(){
         }
         lengthList[i] = Number(lengthList[i]);
     }
-    if (!still_fillable(count_gaps(initGrid),lengthList)){
+    if (!lengths_fill_gaps(count_gaps(initGrid),lengthList)){
         document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
         console.log("Error: Cannot fill grid layout with current lengths");
         return false;
@@ -841,7 +858,10 @@ function update_grid(newGrid){
 
 // creates html objects for displaying the puzzle solution and adds them to the document
 
-// puzzle is format [solvedGrid,finalNoodles]
+// puzzle is an object with parameters
+// solvedGrid - 11x11 2d array with icons of the SOLVED grid
+// noodles - array of noodle objects used to fill the grid
+// genParams - the parameters used to generate the puzzle
 // where finalNoodles is an array of Noodle objects
 function display_new_puzzle(puzzle,puzzleId){
 
@@ -919,7 +939,7 @@ function save_sol_pressed(puzzleNum,difficulty){
 
 // creates html grid elements and appends them to the given containerDiv
 // returns 2d array with every object created
-// takes puzzle [solved 2d grid, noodle object array] and a html div to append to
+// takes puzzle object and a html div to append to
 // fills it with the UNSOLVED puzzle
 function display_grid(puzzle, containerDiv){
 
@@ -939,7 +959,7 @@ function display_grid(puzzle, containerDiv){
             newRow.push(document.createElement("div"));
             newRow[j].className = "tile";
             // makes it black if the tile is "X" (not in puzzle), grey otherwise
-            if (puzzle[0][i+1][j+1] == "X"){
+            if (puzzle.solvedGrid[i+1][j+1] == "X"){
                 newRow[j].style.backgroundColor = "black";
             } else {
                 newRow[j].style.backgroundColor = "lightgrey";
@@ -951,8 +971,8 @@ function display_grid(puzzle, containerDiv){
     }
 
     // colouring in the noodle starts and ends with the corresponding colour
-    for (let i = 0; i < puzzle[1].length; i++){
-        let noodle = puzzle[1][i];
+    for (let i = 0; i < puzzle.noodles.length; i++){
+        let noodle = puzzle.noodles[i];
         let start = noodle.start;
         let end = noodle.end;
         // -1 because need to convert from 1-9 index in 11x11 grid to 0-8 array
@@ -968,9 +988,9 @@ function display_grid(puzzle, containerDiv){
 function show_sol_pressed (puzzleNum){
     //console.log(puzzleNum);
     let puzzleData = activePuzzles[puzzleNum]; // [solutionShowing (true/false), puzzle, elementGrid, button object]
-    let solutionGrid = puzzleData[1][0];
+    let solutionGrid = puzzleData[1].solvedGrid;
     let elementGrid = puzzleData[2];
-    let noodleList = puzzleData[1][1];
+    let noodleList = puzzleData[1].noodles;
     // if the solution IS NOT currently being showed
     if (puzzleData[0] == false) {
         console.log("Showing solution...");
