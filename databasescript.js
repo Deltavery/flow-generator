@@ -143,6 +143,15 @@ async function update_puzzle_difficultyvotes(puzzleId, newDifficultyvotes){
 
 }
 
+// updates the orderNum column of a puzzle
+async function update_puzzle_ordernum(puzzleId, newOrderNum){
+    
+    const { error } = await dataObject.from("puzzles").update({
+        ordernum: newOrderNum
+    }).eq("puzzleid", puzzleId);
+
+}
+
 // gets all (saved) puzzles of a certain difficulty from the database
 // returns an array of objects (one for each puzzle)
 // with attributes puzzleId (int), grid (2d array), ratings (array of strings), finalised (boolean), noodles (array of objects)
@@ -207,13 +216,14 @@ async function get_puzzles_of_difficulty(difficulty){
             "ratings": puzzle.ratings.split(","),
             "finalised": puzzle.finalised,
             "noodles": noodles,
-            "difficultyVotes": puzzle.difficultyvotes.split(",")
+            "difficultyVotes": puzzle.difficultyvotes.split(","),
+            "orderNum": puzzle.ordernum
         });
 
     }
 
     // sort puzzles by ID, ascending
-    returnArray.sort((a,b) => (a.puzzleId - b.puzzleId));
+    returnArray.sort((a,b) => (a.orderNum - b.orderNum));
 
     // note the value this returns is a promise, so you must use:
     // let puzzleArray = await get_puzzles_of_difficulty(difficulty)
