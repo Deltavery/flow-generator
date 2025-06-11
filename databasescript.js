@@ -154,6 +154,10 @@ async function get_puzzles_of_difficulty(difficulty){
     // with attributes puzzleid, grid, ratings, finalised
     const { data, error } = await dataObject.from("puzzles").select().eq("saved",true).eq("difficulty",difficulty);
 
+    if (data == null){
+        return [];
+    }
+
     // if the database contains no puzzles of the corresponding difficulty, returns an empty array
     if (data.length == 0){
         //console.log("no puzzles found");

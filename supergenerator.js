@@ -289,8 +289,8 @@ function place_noodle_within(grid, noodle, possibleStarts, tryCap, remainingNood
                 for (let i = 1; i <= 9; i++){
                     grid[i] = tryGrid[i];
                 }
-                console.log("Placed noodle in tries:");
-                console.log(tryCount);
+                //console.log("Placed noodle in tries:");
+                //console.log(tryCount);
 
                 return true;
             }
