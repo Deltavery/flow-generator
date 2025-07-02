@@ -3,101 +3,106 @@
 
 <head>
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-    <link rel="stylesheet" href="neonstylesheet.css">
-    <link rel="icon" type="image/x-icon" href="favicon.png">
+    <link rel="stylesheet" href="stylesheet.css">
 </head>
 <body>
 
-    <div class="navBar">
+    <div class = "navBar">
         <img src = "logo.png" class = "logo"> 
         Noodle Puzzle Generator
-        <div style = "width:30%"></div>
-        <a href="index.html" class="divButton activeButton">Generate</a>
-        <a href="puzzles.html?difficulty=Tutorial" class="divButton">Review</a>
-        <a href="final.html" class="divButton">Finalised</a>
+        <div style = "width:5%"></div>
+        <a href="index.html" class="hyperButton activeButton">Generate Puzzles</a>
+        <a href="puzzles.html?difficulty=Tutorial" class="hyperButton">Review Puzzles</a>
+        <a href="final.html" class="hyperButton">Final Puzzles</a>
     </div>
-    <div class="fadeLine"></div>
 
     <br>
 
     <input type="text" id="passcodeEntry" placeholder="Enter passcode" style="font-size:40px; display:none" oninput="passcode_typed()">
 
     <div id = "passwordRestricted">
-        <div class = "row">
-            <div class = "column30">
-                <div id = "noodleBoxDefault" class = "noodleBox">
-                    <div class = "noodleBoxLength">14</div>
-                    <div class = "noodleBoxCheckboxes"></div>
-                    <div class = noodleBoxSettings>
-                        &#11187 <br>
-                    </div>
-                </div>
-                <div id = "noodleZone">
-                    Check the boxes to add or remove noodles:
-                </div>
 
-            </div>
-            <div class = "column40">
-                Click on the tiles to add or remove them from the puzzle:
-                <div id = "settingsGridHolder"></div>
-                <br>
-                <div class = "progressBarBox">
-                    <div id = "progressBar" style = "width: 75%; background-color: #1F5567; height:100%;"></div>
-                </div>
-
-            </div>
-            <div class = "column30">
-                <br>
-                <div id = "filledTilesCounter"><span id = "lengthSum">81</span>/<span id = "emptyTileSum">81</span> Tiles Filled</div>
-                <br>
-                <div id = "advancedSettings">
-                    <div style = "font-size: 20px; font-weight: bold; text-decoration: underline;">
-                        Advanced Settings:
-                    </div>
-                    <br>
-                    Turning chance: <br>
-                    <input type="text" id="turnChanceEntry" name="turnChanceEntry" value="1">
-                    <br><br>
-                    Longest straight line allowed: <br>
-                    <input type="text" id="straightLimitEntry" value="5">
-                    <br><br>
-                    Load a saved preset:<br>
-                    <select name="presetSelect" id="presetSelect" onchange="load_pressed()"></select>
-                    <input id="loadButton" type="button" value="Load" onclick="load_pressed();">
-                    <br><br>
-                    Save current layout as preset:<br>
-                    <input type="text" id="presetNameEntry" placeholder="enter name here">
-                    <input id="saveButton" type="button" value="Save" onclick="save_pressed();" >
-                    <br><br>
-                    Amount of puzzles to generate:<br>
-                    <input type="text" id="generateCountEntry" value="1">
-                    <br><br>
-                    
-                </div>
-                <br>
-                <br>
-                <div id = "generateButton" class = "divButton" onclick="gen_pressed();">Generate Puzzle(s)</div>
-                <br>
-                <div id = "feedbackMessage"></div>
-            </div>
-
-
+    <div id = "noodleZoneAndCreator" class = "row">
+        <div id = "noodleZone" class = "row"></div>
+        <div class = "noodleColumn" style = "width:150px">
+            Add a new noodle
+            with the following
+            length:<br>
+            <input type="number" min="1" value="1" style="width:50%" id="newNoodleNumInput">
+            <br>
+            <input type="button" style="font-size:16px" value="Add Noodle" onclick="add_noodle_pressed()">
+            <div id="newNoodleErrorBox" style="color:red"></div>
         </div>
-
-        <br><br>
-
-        <div class="fadeLine"></div>
-
     </div>
+
+    <br>
+
+    <div class="row"><div class = "column50">
+
     
 
+    <div id="lengthSum"></div>
+    Empty tiles in grid: <div id="emptyTileSum">81</div>
 
 
+    <br><br>
+
+    Advanced Settings:
+
+    <br><br>
+
+    Enter Turning Chance:
+    <input type="text" id="turnChanceEntry" name="turnChanceEntry" value="1">
+
+    <br>
+    (Must be a number between 0 and 1)
+    <br>
+    (Higher means more "wiggly" lines, which usually means harder puzzles)
+    <br>
+    (If its taking a long time to generate, try reducing this number)
 
 
+    <br><br>
 
+    Enter Highest Length of Straight Line Allowed:
+    <input type="text" id="straightLimitEntry" value="5">
+    <br>
+    (If left blank, there will be no limit)
 
+    <br><br>
 
+    <label for="presetSelect">Choose a saved preset:</label>
+    <select name="presetSelect" id="presetSelect" onchange="load_pressed()"></select>
+    <input id="loadButton" type="button" value="Load" onclick="load_pressed();" >
+
+    <br><br>
+    
+    Save current layout:
+    <input type="text" id="presetNameEntry" placeholder="enter name here">
+    <input id="saveButton" type="button" value="Save" onclick="save_pressed();" >
+
+    <br><br>
+
+    Amount to generate:
+    <input type="text" id="generateCountEntry" value="1">
+
+    <br>
+    
+    <input id="genButton" type="button" style="font-size:20px;" value="Generate" onclick="gen_pressed();" >
+
+    <div id="errorMessage"></div>
+
+    <div id="generatingMessage"></div>
+
+    </div><div class="column50" id="settingsGridHolder">
+
+    Click the tiles on the grid to remove/add them from the puzzle:
+
+    <br>
+
+    </div></div></div>
+
+    
 <!--Utility (doesnt affect page) Functions Script-->
 <script src="utilityfunctions.js"></script>
 
@@ -170,7 +175,7 @@ genWorker.onmessage = function(event) {
     globalPuzzlesGenerated = globalPuzzlesGenerated + 1;
     if (globalPuzzlesGenerated == globalPuzzleQuota){
         generating = false;
-        document.getElementById("feedbackMessage").innerHTML = "Done!";
+        document.getElementById("generatingMessage").innerHTML = "Done!";
     } else {
         genWorker.postMessage(puzzle.genParams);
     }
@@ -357,30 +362,25 @@ function update_presets(){
 
 // clears and rebuilds the section that displays the noodles
 function refresh_noodles() {
-
     let noodleZone = document.getElementById("noodleZone");
-
+    let coloursList = get_remaining_colours();
     // clears previous html from display
     noodleZone.innerHTML = "";
-
-    // for each unique length, copies and updates a box
+    // for each unique length, builds a column
     for (let i = 0; i < noodleData.length; i++){
-
-        // copies the template
-        let newNoodleBox = document.getElementById("noodleBoxDefault").cloneNode(true);
-        newNoodleBox.id = "noodleBox" + String(i);
-        noodleZone.appendChild(newNoodleBox);
-
-        // Updates length label to correct number
-        newNoodleBox.getElementsByClassName("noodleBoxLength")[0].innerHTML = String(noodleData[i][0]);
-
-        // Updates colour of box
-        let noodleColour = noodleData[i][2];
-        newNoodleBox.style.outlineColor = noodleColour;
-        newNoodleBox.style.background = "linear-gradient(270deg, #050E11, #050E11 60%, " + noodleColour + ")";
-
+        // creates the column
+        let newColumn = document.createElement("div");
+        newColumn.className = "noodleColumn";
+        noodleZone.appendChild(newColumn);
+        // creates the dot with the noodles length and colour
+        let noodleCircle = document.createElement("div");
+        noodleCircle.className = "noodleDot";
+        noodleCircle.innerHTML = String(noodleData[i][0]);
+        noodleCircle.style.backgroundColor = noodleData[i][2];
+        newColumn.appendChild(noodleCircle);
+        newColumn.appendChild(document.createElement("br"));
+        newColumn.appendChild(document.createElement("br"));
         // creates a checkbox for each noodle
-        let checkboxesDiv = newNoodleBox.getElementsByClassName("noodleBoxCheckboxes")[0];
         for (let j = 0; j < noodleData[i][1].length; j++){
             let newCheckbox = document.createElement("input");
             newCheckbox.type = "checkbox";
@@ -390,8 +390,57 @@ function refresh_noodles() {
                 noodleData[i][1][j] = !(noodleData[i][1][j]);
                 update_length_sum();
             }
-            checkboxesDiv.appendChild(newCheckbox)
+            newColumn.appendChild(newCheckbox)
         }
+        newColumn.appendChild(document.createElement("br"));
+        newColumn.appendChild(document.createElement("br"));
+        // creates the dropdown to pick a colour
+        let newDropdown = document.createElement("select");
+        // sets the default to just say "Colour"
+        let defaultOption = document.createElement("option");
+        newDropdown.appendChild(defaultOption);
+        defaultOption.value = "Colour";
+        defaultOption.innerHTML = "Colour";
+        newDropdown.value = "Colour";
+        // adds each (remaining) colour as an option to the dropdown menu
+        for (let j = 0; j < coloursList.length; j++){
+
+            let newOption = document.createElement("option");
+            newOption.value = coloursList[j];
+
+            // sets the text to say the colours display name
+            newOption.innerHTML = get_colour_display_name(coloursList[j]);
+            
+            newDropdown.appendChild(newOption);
+        }
+        // on picking a colour, updates the noodleData, then updates the GUI
+        newDropdown.onchange = function () {
+            noodleData[i][2] = newDropdown.value;
+            refresh_noodles();
+        }
+        newColumn.appendChild(newDropdown);
+        newColumn.appendChild(document.createElement("br"));
+
+        // creates the remove button
+        let newButton = document.createElement("input");
+        newButton.type = "button";
+        newButton.style.fontSize = "16px";
+        newButton.value = "Remove";
+        // on click, removes the last noodle from this lengths data
+        // if there was only one left, removes the entire length from the data
+        // then updates the GUI
+        newButton.onclick = function () {
+            if (noodleData[i][1].length == 1){
+                noodleData.splice(i,1);
+            } else {
+                noodleData[i][1].pop();
+            }
+            refresh_noodles();
+            update_length_sum();
+        }
+        newColumn.appendChild(newButton);
+
+        newColumn.appendChild(document.createElement("br"));
 
         // creates the allowImmediateTurns checkbox
         let newCheckbox = document.createElement("input");
@@ -401,14 +450,11 @@ function refresh_noodles() {
         newCheckbox.onclick = function () {
             noodleData[i][3] = !(noodleData[i][3]);
         }
-        newNoodleBox.getElementsByClassName("noodleBoxSettings")[0].appendChild(newCheckbox);
-
-        // If its a 1 length block, removes unneccessary features
-        if (noodleData[i][0] == "1"){
-            newNoodleBox.getElementsByClassName("noodleBoxLength")[0].innerHTML = "";
-            newNoodleBox.getElementsByClassName("noodleBoxSettings")[0].innerHTML = "";
-            newNoodleBox.style.outlineColor = "white";
-        }
+        // adds label for the checkbox
+        let newLabel = document.createElement("div");
+        newLabel.innerHTML = "Allow Immediate Turns?";
+        newColumn.appendChild(newLabel);
+        newColumn.appendChild(newCheckbox)
     }
 }
 
@@ -424,8 +470,41 @@ function gen_pressed() {
         globalPuzzleQuota = parameters[4];
         genWorker.postMessage(parameters);
         generating = true;
-        document.getElementById("feedbackMessage").innerHTML = "Currently generating...";
+        document.getElementById("generatingMessage").innerHTML = "Currently generating...";
     }
+}
+
+// runs when the "add noodle" button in the noodle display is clicked 
+function add_noodle_pressed(){
+    let coloursList = get_remaining_colours();
+    let numberInput = document.getElementById("newNoodleNumInput");
+    let newLength = parseInt(numberInput.value);
+    // clears the error box first
+    document.getElementById("newNoodleErrorBox").innerHTML = "";
+    // check if the input is a valid number
+    if (isNaN(newLength)){
+        document.getElementById("newNoodleErrorBox").innerHTML = "Please enter a number";
+        return;
+    } else if (newLength < 1){
+        document.getElementById("newNoodleErrorBox").innerHTML = "Please enter a number greater than 0";
+        return;
+    }
+    // gets if the length is new or not
+    // -1 is new
+    let lengthIndex = -1;
+    for (let i = 0; i < noodleData.length; i++){
+        if (newLength == noodleData[i][0]){
+            lengthIndex = i;
+        }
+    }
+    // if new
+    if (lengthIndex != -1){
+        noodleData[lengthIndex][1].push(false);
+    // if not new
+    } else {
+        noodleData.push([newLength,[false],coloursList[0]])
+    }
+    refresh_noodles();
 }
 
 // runs upon the "load" button being pressed
@@ -454,15 +533,15 @@ function save_pressed(){
     console.log("saving!");
     let nameEntry = document.getElementById("presetNameEntry").value;
     if (nameEntry == ""){
-        document.getElementById("feedbackMessage").innerHTML = "Cant save preset: Please enter a name";
+        document.getElementById("errorMessage").innerHTML = "Cant save preset: Please enter a name";
         return;
     }
     if (nameEntry == "default"){
-        document.getElementById("feedbackMessage").innerHTML = "Cant save preset: Please do not enter default as the name";
+        document.getElementById("errorMessage").innerHTML = "Cant save preset: Please do not enter default as the name";
         return;
     }
     if (nameEntry.includes(",")){
-        document.getElementById("feedbackMessage").innerHTML = "Cant save preset: Please do not use commas in name";
+        document.getElementById("errorMessage").innerHTML = "Cant save preset: Please do not use commas in name";
         return;
     }
 
@@ -486,7 +565,7 @@ function save_pressed(){
     update_presets();
 
     // updates text to confirm save
-    document.getElementById("feedbackMessage").innerHTML = "Successfully saved preset!";
+    document.getElementById("errorMessage").innerHTML = "Successfully saved preset!";
 }
 
 // saves the preset to local storage
@@ -631,13 +710,25 @@ function setting_tile_clicked(row,column){
     }
 }
 
+// returns a list of all colours not currently being used by a noodle
+function get_remaining_colours(){
+    let coloursList = ["#00B5E2","#FF9E1B","#963CBD","#FC4C02","#EEDC00","#DF1995","#7ACC00","#EABEDB","red","orange","yellow","green","blue","purple","hotpink","lightblue","limegreen","cyan","maroon","orchid","tan","darkslategrey","goldenrod","seagreen","slategrey","teal","saddlebrown","lavender","black"];
+    //removes colours already being used from the list
+    for (let i = 0; i < noodleData.length; i++){
+        let removeIndex = coloursList.indexOf(noodleData[i][2]);
+        coloursList.splice(removeIndex,1);
+    }
+    return coloursList;
+
+}
+
 // updates the html text display showing the sum of the lengths of activated noodles
 function update_length_sum(){
     // gets list of lengths of activated noodles
     let lengthList = get_length_list();
     // if theres more than 20 noodles activated, updates the display with a corresponding error
     if (lengthList.length > 20){
-        document.getElementById("feedbackMessage").innerHTML = "Error: Cannot use more than 20 lengths";
+        document.getElementById("lengthSum").innerHTML = "Error: Cannot use more than 20 lengths";
         return;
     }
     // counts the sum
@@ -646,7 +737,7 @@ function update_length_sum(){
         sum = sum + lengthList[i];
     }
     // updates the display with the sum
-    document.getElementById("lengthSum").innerHTML = String(sum);
+    document.getElementById("lengthSum").innerHTML = "Sum: " + String(sum);
 }
 
 // returns a list of the lengths of all the noodles currently selected
@@ -674,21 +765,21 @@ function get_check_parameters(){
     // Checking length data to see if it is valid
     let lengthList = get_length_list();
     if (lengthList.length > 20){
-        document.getElementById("feedbackMessage").innerHTML = "Error: Too many lengths";
+        document.getElementById("errorMessage").innerHTML = "Error: Too many lengths";
         console.log("Error: Too many lengths");
         return false;
     }
     for (let i = 0; i < lengthList.length; i++){
         if (isNaN(lengthList[i])){
             console.log(lengthList[i]);
-            document.getElementById("feedbackMessage").innerHTML = "Error: Non numbers found in lengths";
+            document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in lengths";
             console.log("Error: Non numbers found in lengths");
             return false;
         }
         lengthList[i] = Number(lengthList[i]);
     }
     if (!lengths_fill_gaps(count_gaps(initGrid),lengthList)){
-        document.getElementById("feedbackMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
+        document.getElementById("errorMessage").innerHTML = "Error: Cannot fill grid layout with current lengths";
         console.log("Error: Cannot fill grid layout with current lengths");
         return false;
     }
@@ -696,11 +787,11 @@ function get_check_parameters(){
     let turnData = document.getElementById("turnChanceEntry").value;
     turnData = turnData.replaceAll(" ","");
     if (isNaN(turnData)) {
-        document.getElementById("feedbackMessage").innerHTML = "Error: Non numbers found in turning chance";
+        document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
         return false;
     }
     if ((turnData < 0) || (turnData > 1)) {
-        document.getElementById("feedbackMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
+        document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
         return false;
     }
     
@@ -715,7 +806,7 @@ function get_check_parameters(){
     let puzzleQuota = document.getElementById("generateCountEntry").value;
     puzzleQuota = puzzleQuota.replaceAll(" ","");
     if (isNaN(parseInt(puzzleQuota)) || parseInt(puzzleQuota) <= 0) {
-        document.getElementById("feedbackMessage").innerHTML = "Error: Invalid amount of puzzles to generate";
+        document.getElementById("errorMessage").innerHTML = "Error: Invalid amount of puzzles to generate";
         return false;
     }
 
@@ -731,11 +822,11 @@ function get_parameters(){
     let turnData = document.getElementById("turnChanceEntry").value;
     turnData = turnData.replaceAll(" ","");
     if (isNaN(turnData)) {
-        document.getElementById("feedbackMessage").innerHTML = "Error: Non numbers found in turning chance";
+        document.getElementById("errorMessage").innerHTML = "Error: Non numbers found in turning chance";
         return false;
     }
     if ((turnData < 0) || (turnData > 1)) {
-        document.getElementById("feedbackMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
+        document.getElementById("errorMessage").innerHTML = "Error: Turning Chance not between 0 and 1";
         return false;
     }
     
@@ -1035,3 +1126,4 @@ function show_sol_pressed (puzzleNum){
 </script>
 </body>
 </html>
+
