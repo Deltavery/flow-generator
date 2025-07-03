@@ -124,7 +124,7 @@ input[type=checkbox] {
 
 .noodleBoxCheckboxes {
     align-self: flex-end;
-    width: 50%;
+    width: 40%;
     margin-left: 10%;
 }
 
@@ -132,6 +132,13 @@ input[type=checkbox] {
     align-self: flex-end;
     display:flex;
     font-size: 30px;
+}
+
+.noodleBoxFinalisedCount {
+    align-self: flex-end;
+    display:flex;
+    font-size: 12px;
+    margin-left: 5%;
 }
 
 .noodleBoxTurnButton {

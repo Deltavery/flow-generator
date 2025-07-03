@@ -31,6 +31,7 @@
                     <div class = noodleBoxSettings title = "If checked, allows immediate turns at the end of the noodles.">
                         &#11187 <br>
                     </div>
+                    <div class = "noodleBoxFinalisedCount">x0</div>
                 </div>
                 <div id = "noodleZone">
                     Check the boxes to add or remove noodles:
@@ -71,6 +72,8 @@
                     <br><br>
                     Amount of puzzles to generate:<br>
                     <input type="text" id="generateCountEntry" value="1">
+                    <br><br>
+                    <input id="disableTurnsButton" type="button" value="Disable all immediate turns" onclick="disable_turns_pressed();" >
                     <br><br>
                     
                 </div>
@@ -138,6 +141,14 @@ let savedPresets = [];
 
 // tracks all saved puzzles and those generated during this session, as to avoid dupes
 let globalDupeGrids = [];
+
+// For displaying how much of each noodle has been used
+// their lengths
+// the amount of times they appear at the corresponding index in colourLengths
+// the unique colours used
+let globalUniqueColours = [];
+let globalColourLengths = [];
+let globalColourCounts = [];
 
 // amount of puzzles generated, while generating more than 1
 let globalPuzzlesGenerated = 0;
@@ -236,11 +247,9 @@ async function setup_page(){
     // loads the preset in the first slot, ie the default one
     load_pressed();
 
-    // updates the noodle display to show the correct data
-    refresh_noodles();
+    
 
-    // updates the length sum display
-    update_length_sum();
+    
 
     // loads globalDupeGrids
     // array of 11x11 2d grid arrays, with strings of noodle lengths at noodle ends
@@ -249,13 +258,36 @@ async function setup_page(){
         let puzzleList = await get_puzzles_of_difficulty(difficulties[i]);
         for (let dupePuzzle of puzzleList) {
             let newDupeGrid = [["X","X","X","X","X","X","X","X","X","X","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X"," "," "," "," "," "," "," "," "," ","X"],["X","X","X","X","X","X","X","X","X","X","X"]];
-            for (let dupeNoodle of dupePuzzle.noodles) {
-                newDupeGrid[dupeNoodle.start[0]][dupeNoodle.start[1]] = String(dupeNoodle.length);
-                newDupeGrid[dupeNoodle.end[0]][dupeNoodle.end[1]] = String(dupeNoodle.length);
+            for (let noodle of dupePuzzle.noodles) {
+                newDupeGrid[noodle.start[0]][noodle.start[1]] = String(noodle.length);
+                newDupeGrid[noodle.end[0]][noodle.end[1]] = String(noodle.length);
+
+                if (dupePuzzle.finalised != true){
+                    continue;
+                }
+
+                // Tracking usage of noodles to display in the noodle boxes
+                if (!globalUniqueColours.includes(noodle.colour)) {
+                    globalUniqueColours.push(noodle.colour);
+                    globalColourLengths.push(noodle.length);
+                    globalColourCounts.push(1);
+                } else {
+                    let colourIndex = globalUniqueColours.indexOf(noodle.colour);
+                    globalColourCounts[colourIndex] = globalColourCounts[colourIndex] + 1;
+                }
+
             }
             globalDupeGrids.push(newDupeGrid);
+
         }
+
     }
+
+    // updates the noodle display to show the correct data
+    refresh_noodles();
+
+    // updates the length sum display
+    update_length_sum();
 }
 
 // runs whenever the user types in the passcode box
@@ -403,6 +435,12 @@ function refresh_noodles() {
         }
         newNoodleBox.getElementsByClassName("noodleBoxSettings")[0].appendChild(newCheckbox);
 
+        // Updates usage count label to correct number
+        if (globalColourLengths.includes(noodleData[i][0])){
+            let colourIndex = globalColourLengths.indexOf(noodleData[i][0]);
+            newNoodleBox.getElementsByClassName("noodleBoxFinalisedCount")[0].innerHTML = "x" + String(globalColourCounts[colourIndex]);
+        }
+
         // If its a 1 length block, removes unneccessary features
         if (noodleData[i][0] == "1"){
             newNoodleBox.getElementsByClassName("noodleBoxLength")[0].innerHTML = "";
@@ -426,6 +464,13 @@ function gen_pressed() {
         generating = true;
         document.getElementById("feedbackMessage").innerHTML = "Currently generating...";
     }
+}
+
+function disable_turns_pressed() {
+    for (let i = 0; i < noodleData.length; i++){
+        noodleData[i][3] = false;
+    }
+    refresh_noodles();
 }
 
 // runs upon the "load" button being pressed
