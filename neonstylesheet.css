@@ -181,12 +181,18 @@ input[type=checkbox] {
     outline-offset: -1px;
 }
 
-.progressBarBox {
+#progressBarBox {
     background-color: darkgrey;
     height: 30px;
     outline-style: solid;
     outline-width: 1px;
     outline-color: #1F5567;
+    position: relative;
+}
+
+#progressBarLabel {
+    position: absolute;
+    width: 100%;
 }
 
 #filledTilesCounter {

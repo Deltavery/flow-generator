@@ -42,8 +42,9 @@
                 Click on the tiles to add or remove them from the puzzle:
                 <div id = "settingsGridHolder"></div>
                 <br>
-                <div class = "progressBarBox">
-                    <div id = "progressBar" style = "width: 75%; background-color: #1F5567; height:100%;"></div>
+                <div id = "progressBarBox">
+                    <div id = "progressBarLabel"></div>
+                    <div id = "progressBar" style = "width: 0%; background-color: #1F5567; height:100%;"></div>
                 </div>
 
             </div>
@@ -160,7 +161,42 @@ let globalPuzzleQuota = 1;
 genWorker.onmessage = function(event) {
 
     console.log("recieved message!");
-    let puzzle = event.data;
+
+    let messageData = event.data;
+    let loadingLabel = document.getElementById("progressBarLabel");
+    let loadingBar = document.getElementById("progressBar");
+    console.log(loadingBar);
+
+    console.log(typeof messageData);
+
+    if ((typeof messageData) == "string"){
+
+        loadingLabel.innerHTML = messageData + "  (" + globalPuzzlesGenerated + "/" + globalPuzzleQuota + ")";
+
+        switch (messageData){
+
+            case "Generating puzzles...":
+                console.log("25%");
+                loadingBar.style.width = "25%";
+                break;
+            
+            case "Solution passed first uniqueness check":
+                console.log("50%");
+                loadingBar.style.width = "50%";
+                break;
+            
+            case "Checking uniqueness of multiple noodle endings...":
+                console.log("75%");
+                loadingBar.style.width = "75%";
+                break;
+        }
+
+        return;
+    }
+
+    let puzzle = messageData;
+    loadingLabel.innerHTML = "Done!";
+    loadingBar.style.width = "100%";
 
     console.log(puzzle);
 
@@ -181,7 +217,6 @@ genWorker.onmessage = function(event) {
     globalPuzzlesGenerated = globalPuzzlesGenerated + 1;
     if (globalPuzzlesGenerated == globalPuzzleQuota){
         generating = false;
-        document.getElementById("feedbackMessage").innerHTML = "Done!";
     } else {
         genWorker.postMessage(puzzle.genParams);
     }
@@ -462,7 +497,6 @@ function gen_pressed() {
         globalPuzzleQuota = parameters[4];
         genWorker.postMessage(parameters);
         generating = true;
-        document.getElementById("feedbackMessage").innerHTML = "Currently generating...";
     }
 }
 

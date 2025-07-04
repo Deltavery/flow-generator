@@ -2,6 +2,7 @@
 
 // runs upon the worker being called from the main program
 function worker_called(genParams){
+
     let iconsList = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t"];
 
     // array of each length of noodle, each with format [length int, [array of booleans for if they're enabled or not], colour string, allowImmediateTurns bool]
@@ -60,6 +61,8 @@ function generate_puzzle(inputGrid, noodleList, noodleData, straightLimit=81, tu
 // may fail, in which case it returns false
 // otherwise returns puzzle object seen at generate_puzzle
 function try_generate_puzzle(inputGrid, noodleList, noodleData, straightLimit, turnChance, tryCap, solverTimeout){
+
+    postMessage("Generating puzzles...");
 
     let grid = structuredClone(inputGrid);
     let noodles = structuredClone(noodleList);
@@ -915,6 +918,8 @@ function is_unique(grid,noodles,solverTimeout,colourDuping,iconGrid){
     if (are_pairings_unique(iconGrid,noodles,solverTimeout) == false){
         return false;
     }
+
+    postMessage("Solution passed first uniqueness check");
     
     let solverResult = solve_noodles(inputGrid,noodles,solverTimeout);
 
@@ -922,12 +927,13 @@ function is_unique(grid,noodles,solverTimeout,colourDuping,iconGrid){
         console.log("Solver timed out");
         return false
     } else if (solverResult.length != 1){
-        console.log("Solution not unique")
+        console.log("Solution not unique");
         return false
     }
     if (!colourDuping) {
         return solverResult[0];
     } else {
+        postMessage("Checking uniqueness of multiple noodle endings...");
 
         // need to check other combinations of noodles of same length (therefore colour) DONT have ANY solutions
         // holds each unique noodle length
@@ -986,7 +992,7 @@ function is_unique(grid,noodles,solverTimeout,colourDuping,iconGrid){
         }
         // if it has gotten through all the other permutations, ie none had a solution
         // returns the successful solution as usual
-        console.log("No other permutations have a solution")
+        console.log("No other permutations have a solution");
         return solverResult[0];
     }
 }
