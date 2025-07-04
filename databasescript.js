@@ -21,6 +21,13 @@ async function insert_puzzle(puzzle){
     // gets the id of the puzzle just added
     let puzzleId = data[0].puzzleid;
 
+    // set the default ordering to be the puzzle ID
+    const { orderingError } = await dataObject.from("puzzles").update({
+        ordernum: puzzleId
+    }).eq("puzzleid", puzzleId);
+
+    console.log(orderingError);
+
     // inserting rows for each noodle to "noodles" database
     let noodles = puzzle.noodles;
     for (let i = 0; i < noodles.length; i++){

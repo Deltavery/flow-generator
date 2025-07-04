@@ -267,7 +267,7 @@ function remove_local_puzzle(puzzle){
 }
 
 // creates elements for every puzzle display and adds them to the page
-function update_display (){
+function update_display(){
 
     // shorthand for globalPuzzles
     let puzzles = globalPuzzles;
@@ -892,6 +892,10 @@ function finalise_pressed (puzzle, finaliseButton){
 
     // updates the finalised count in the title
     update_title();
+
+    update_display();
+
+    console.log(puzzle.finalised);
 }
 
 // runs when the delete button is pressed

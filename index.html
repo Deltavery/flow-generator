@@ -160,14 +160,9 @@ let globalPuzzleQuota = 1;
 // runs upon the puzzle being generated
 genWorker.onmessage = function(event) {
 
-    console.log("recieved message!");
-
     let messageData = event.data;
     let loadingLabel = document.getElementById("progressBarLabel");
     let loadingBar = document.getElementById("progressBar");
-    console.log(loadingBar);
-
-    console.log(typeof messageData);
 
     if ((typeof messageData) == "string"){
 
@@ -176,17 +171,14 @@ genWorker.onmessage = function(event) {
         switch (messageData){
 
             case "Generating puzzles...":
-                console.log("25%");
                 loadingBar.style.width = "25%";
                 break;
             
             case "Solution passed first uniqueness check":
-                console.log("50%");
                 loadingBar.style.width = "50%";
                 break;
             
             case "Checking uniqueness of multiple noodle endings...":
-                console.log("75%");
                 loadingBar.style.width = "75%";
                 break;
         }
