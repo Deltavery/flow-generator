@@ -434,9 +434,14 @@ function show_grid_unsolved (puzzle, gridElements) {
         let end = noodle.end;
         // -1 because need to convert from 1-9 index in 11x11 grid to 0-8 array
         gridElements[start[0]-1][start[1]-1].style.backgroundColor = noodle.colour;
-        gridElements[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
         gridElements[end[0]-1][end[1]-1].style.backgroundColor = noodle.colour;
+        gridElements[start[0]-1][start[1]-1].innerHTML = String(noodle.length);
         gridElements[end[0]-1][end[1]-1].innerHTML = String(noodle.length);
+        // Sets obstacle text to be black
+        if (noodle.length == 1){
+            gridElements[start[0]-1][start[1]-1].style.color = "black";
+            gridElements[end[0]-1][end[1]-1].style.color = "black";
+        }
     }
 }
 
