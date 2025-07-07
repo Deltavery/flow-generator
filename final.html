@@ -87,8 +87,8 @@
             <br>
 
             <div class="centreRow">
-                <div class="divButton puzzleReviewSwapUpButton" style="font-size:50px; width:40%">&#8593</div>
-                <div class="divButton puzzleReviewSwapDownButton" style="font-size:50px; width:40%">&#8595</div>
+                <div class="divButton puzzleReviewSwapUpButton" style="font-size:50px; width:40%">&#8592</div>
+                <div class="divButton puzzleReviewSwapDownButton" style="font-size:50px; width:40%">&#8594</div>
             </div>
 
         </div>
@@ -187,6 +187,8 @@ function update_display(difficulty){
 
     // the div element containing all the display divs
     let containerDiv = document.getElementById("puzzleReviewContainer" + difficulty);
+
+    console.log(difficulty);
 
     // clears the container div of anything there before
     containerDiv.innerHTML = "";
@@ -554,7 +556,8 @@ function update_order_pressed(puzzle,direction,difficultyIndex){
     puzzle2.orderNum = tempOrderNumHolder;
 
     // updates the display
-    update_display();
+    let difficulties = ["Tutorial","Easy","Medium","Hard"];
+    update_display(difficulties[difficultyIndex]);
 
 }
 
